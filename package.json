@@ -1,0 +1,20 @@
+{
+  "name": "opencode-compact-lsp",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "OpenCode plugin: compact/minify builtin lsp tool output",
+  "license": "MIT",
+  "bin": { "opencode-compact-lsp": "./dist/cli.js" },
+  "exports": { ".": "./src/plugin.ts" },
+  "files": ["dist", "src", "README.md", "LICENSE"],
+  "scripts": {
+    "test": "bun test",
+    "build": "bun build src/cli.ts --outfile dist/cli.js --target node --format esm && bun scripts/ensure-shebang.ts"
+  },
+  "peerDependencies": { "@opencode-ai/plugin": ">=1.0.0" },
+  "dependencies": {
+    "@clack/prompts": "1.7.0",
+    "comment-json": "5.0.0"
+  },
+  "devDependencies": { "@opencode-ai/plugin": "^1.18.0" }
+}
