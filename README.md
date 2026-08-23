@@ -156,12 +156,13 @@ npx opencode-compact-lsp doctor --clear
 
 ## Releases
 
-npm version is always `package.json`'s `version`. Git tags only choose the dist-tag:
+npm version is always `package.json`'s `version`. A git tag `v0.1.0` (must match that version) publishes to the **next** dist-tag.
 
-| Git tag | npm dist-tag |
-|---------|--------------|
-| `v0.1.0` | `next` |
-| `v0.1.0-release` | `latest` (promotes that version if it is already on the registry) |
+Promotion to **latest** is manual:
+
+```
+npm dist-tag add opencode-compact-lsp@0.1.0 latest
+```
 
 Add `NPM_TOKEN` as a GitHub Actions secret (or repository variable). Then:
 
