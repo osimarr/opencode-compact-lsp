@@ -70,3 +70,9 @@ Or run the CLI from source:
 ```
 bun src/cli.ts install --project
 ```
+
+Load-smoke (isolated HOME, plugin load only — does not invoke `lsp`):
+
+```
+bash tests/e2e/smoke.sh
+```
