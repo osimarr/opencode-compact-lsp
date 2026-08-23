@@ -160,7 +160,14 @@ Promotion to **latest** is manual:
 npm dist-tag add opencode-compact-lsp@0.1.0 latest
 ```
 
-Add `NPM_TOKEN` as a GitHub Actions secret (or repository variable). Then:
+Publishing uses npm trusted publishing (OIDC), not a token. On npmjs.com → package (or account) **Trusted Publisher**:
+
+- Organization or user: `osimarr`
+- Repository: `opencode-compact-lsp`
+- Workflow filename: `publish.yml`
+- Environment name: `npm`
+
+Then:
 
 ```
 git tag v0.1.0
