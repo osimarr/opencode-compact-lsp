@@ -1,6 +1,6 @@
 {
   "name": "opencode-compact-lsp",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "description": "OpenCode plugin: compact/minify builtin lsp tool output",
   "author": "dacohen1",
