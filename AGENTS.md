@@ -28,7 +28,7 @@ Also register the same path in `tui.json` as a string spec, or run:
 bun src/cli.ts install --project
 ```
 
-`install` / `doctor --fix` write a tuple into `opencode.json` and a string spec into `tui.json`. Spec is unpinned for a PATH binary, `name@version` for npx/bunx, and `name@latest` / `name@next` from those paths.
+`install` / `doctor --fix` write a spec string into `opencode.json` and `tui.json` (implicit compact/minified true). Spec is unpinned for a PATH binary, `name@version` for npx/bunx, and `name@latest` / `name@next` from those paths.
 
 ## Commands
 

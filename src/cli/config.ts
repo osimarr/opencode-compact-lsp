@@ -2,7 +2,6 @@ import { existsSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs
 import { homedir } from "node:os"
 import { dirname, join, parse } from "node:path"
 import { fileURLToPath } from "node:url"
-import type { CompactLspOptions } from "../options"
 import { detectCli, pluginSpec } from "./detect"
 import type { InstallScope } from "./flags"
 import { detectJsoncFile, readJsoncFile, writeJsoncFile } from "./jsonc"
@@ -94,24 +93,6 @@ export function matchesPluginEntry(entry: unknown): boolean {
   return false
 }
 
-function entryName(entry: unknown): string | undefined {
-  if (typeof entry === "string") return entry
-  if (Array.isArray(entry) && typeof entry[0] === "string") return entry[0]
-  return undefined
-}
-
-function optionsDeepEqual(existing: unknown, options: CompactLspOptions): boolean {
-  if (!existing || typeof existing !== "object" || Array.isArray(existing)) return false
-  const rec = existing as Record<string, unknown>
-  const keys = Object.keys(rec)
-  if (keys.length !== 2 || !("compact" in rec) || !("minified" in rec)) return false
-  return rec.compact === options.compact && rec.minified === options.minified
-}
-
-function pluginTuple(spec: string, options: CompactLspOptions): [string, CompactLspOptions] {
-  return [spec, { compact: options.compact, minified: options.minified }]
-}
-
 export function hasPluginEntry(configDir = getOpenCodeConfigDir()): boolean {
   const file = detectJsoncFile(configDir, "opencode")
   if (file.format === "none") return false
@@ -128,8 +109,8 @@ export function hasTuiPluginEntry(configDir = getOpenCodeConfigDir()): boolean {
   return plugins.some((entry) => matchesPluginEntry(entry))
 }
 
-export function ensureTuiPluginEntry(spec: string, configDir: string): PluginEntryResult {
-  const file = detectJsoncFile(configDir, "tui")
+function ensureNamedPluginEntry(kind: "opencode" | "tui", spec: string, configDir: string): PluginEntryResult {
+  const file = detectJsoncFile(configDir, kind)
   const configPath = file.path
   if (file.format === "none") {
     writeJsoncFile(configPath, { plugin: [spec] }, "json")
@@ -152,7 +133,7 @@ export function ensureTuiPluginEntry(spec: string, configDir: string): PluginEnt
   const plugins = Array.isArray(value.plugin) ? [...value.plugin] : []
   const index = plugins.findIndex((entry) => matchesPluginEntry(entry))
   if (index >= 0) {
-    if (entryName(plugins[index]) === spec) {
+    if (plugins[index] === spec) {
       return {
         ok: true,
         action: "already_present",
@@ -160,8 +141,7 @@ export function ensureTuiPluginEntry(spec: string, configDir: string): PluginEnt
         configPath,
       }
     }
-    if (Array.isArray(plugins[index])) plugins[index] = [spec, ...plugins[index].slice(1)]
-    else plugins[index] = spec
+    plugins[index] = spec
     value.plugin = plugins
     writeJsoncFile(configPath, value, file.format)
     return {
@@ -182,67 +162,19 @@ export function ensureTuiPluginEntry(spec: string, configDir: string): PluginEnt
   }
 }
 
-export function ensurePluginEntry(spec: string, options: CompactLspOptions, configDir: string): PluginEntryResult {
-  const file = detectJsoncFile(configDir, "opencode")
-  const configPath = file.path
-  const tuple = pluginTuple(spec, options)
-  if (file.format === "none") {
-    writeJsoncFile(configPath, { plugin: [tuple] }, "json")
-    return {
-      ok: true,
-      action: "added",
-      message: `Created ${configPath} and added ${spec}`,
-      configPath,
-    }
-  }
-  const { value, error } = readJsoncFile(configPath)
-  if (error || !value) {
-    return {
-      ok: false,
-      action: "error",
-      message: `Could not parse ${configPath}: ${error ?? "unknown error"}`,
-      configPath,
-    }
-  }
-  const plugins = Array.isArray(value.plugin) ? [...value.plugin] : []
-  const index = plugins.findIndex((entry) => matchesPluginEntry(entry))
-  if (index >= 0) {
-    const existing = plugins[index]
-    if (entryName(existing) === spec && Array.isArray(existing) && optionsDeepEqual(existing[1], options)) {
-      return {
-        ok: true,
-        action: "already_present",
-        message: `${spec} is already registered in ${configPath}`,
-        configPath,
-      }
-    }
-    plugins[index] = tuple
-    value.plugin = plugins
-    writeJsoncFile(configPath, value, file.format)
-    return {
-      ok: true,
-      action: "updated",
-      message: `Updated ${configPath} to ${spec}`,
-      configPath,
-    }
-  }
-  plugins.push(tuple)
-  value.plugin = plugins
-  writeJsoncFile(configPath, value, file.format)
-  return {
-    ok: true,
-    action: "added",
-    message: `Added ${spec} to ${configPath}`,
-    configPath,
-  }
+export function ensureTuiPluginEntry(spec: string, configDir: string): PluginEntryResult {
+  return ensureNamedPluginEntry("tui", spec, configDir)
+}
+
+export function ensurePluginEntry(spec: string, configDir: string): PluginEntryResult {
+  return ensureNamedPluginEntry("opencode", spec, configDir)
 }
 
 export function registerPlugin(
   spec: string,
-  options: CompactLspOptions,
   configDir: string,
 ): { ok: boolean; server: PluginEntryResult; tui: PluginEntryResult } {
-  const server = ensurePluginEntry(spec, options, configDir)
+  const server = ensurePluginEntry(spec, configDir)
   const tui = ensureTuiPluginEntry(spec, configDir)
   return { ok: server.ok && tui.ok, server, tui }
 }

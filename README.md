@@ -122,21 +122,17 @@ npx opencode-compact-lsp install
 
 Then quit and restart OpenCode.
 
-`install` writes a plugin tuple into `opencode.json` (server) and the same spec string into `tui.json` (TUI plugin list). Spec is unpinned for a PATH binary, `name@version` for npx/bunx, and `name@latest` / `name@next` when invoked from those paths.
+`install` writes the plugin spec string into `opencode.json` and `tui.json` (no options object; compact/minified default to true). Spec is unpinned for a PATH binary, `name@version` for npx/bunx, and `name@latest` / `name@next` when invoked from those paths.
 
 ```
 npx opencode-compact-lsp install --global
 npx opencode-compact-lsp install --project
-npx opencode-compact-lsp install --compact --minified
-npx opencode-compact-lsp install --no-compact --no-minified
 ```
 
 | Flag | Effect |
 |------|--------|
 | `--global` | `~/.config/opencode/opencode.json` and `tui.json` |
 | `--project` | `.opencode/opencode.json` and `tui.json` |
-| `--compact` / `--no-compact` | Codex DTO on / off |
-| `--minified` / `--no-minified` | Minify JSON on / off |
 
 Replace `npx` with `bunx`, or use `opencode-compact-lsp` if the binary is on PATH.
 
@@ -152,7 +148,7 @@ npx opencode-compact-lsp doctor --clear
 - `doctor --fix` — register the plugin in both files if missing
 - `doctor --clear` — delete `~/.cache/opencode/packages/opencode-compact-lsp@*`
 
-`--fix` accepts the same `--global` / `--project` and compact/minified flags as `install`.
+`--fix` accepts the same `--global` / `--project` flags as `install`.
 
 ## Releases
 

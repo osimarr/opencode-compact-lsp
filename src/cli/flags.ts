@@ -16,22 +16,3 @@ export function installScope(args: readonly string[]): InstallScopeFlag {
   if (project) return "project"
   return undefined
 }
-
-export type FlagTriple = true | false | "conflict" | undefined
-
-export function boolFlag(args: readonly string[], name: string): FlagTriple {
-  const yes = args.includes(`--${name}`)
-  const no = args.includes(`--no-${name}`)
-  if (yes && no) return "conflict"
-  if (yes) return true
-  if (no) return false
-  return undefined
-}
-
-export function compactFlag(args: readonly string[]): FlagTriple {
-  return boolFlag(args, "compact")
-}
-
-export function minifiedFlag(args: readonly string[]): FlagTriple {
-  return boolFlag(args, "minified")
-}

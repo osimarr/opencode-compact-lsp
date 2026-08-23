@@ -1,36 +1,18 @@
 import { intro, log, note, outro } from "@clack/prompts"
-import { resolveOptions } from "../options"
 import { configDirForScope, defaultPluginSpec, registerPlugin } from "./config"
 import { detectCli } from "./detect"
-import type { FlagTriple, InstallScopeFlag } from "./flags"
+import type { InstallScopeFlag } from "./flags"
 import { resolveInstallScope } from "./scope"
 
-export function flagConflictMessage(compact: FlagTriple, minified: FlagTriple): string | undefined {
-  if (compact === "conflict") return "Use either --compact or --no-compact, not both."
-  if (minified === "conflict") return "Use either --minified or --no-minified, not both."
-  return undefined
-}
-
-export async function runInstall(options: {
-  scope: InstallScopeFlag
-  compact: FlagTriple
-  minified: FlagTriple
-}): Promise<number> {
+export async function runInstall(options: { scope: InstallScopeFlag }): Promise<number> {
   const cli = detectCli()
   intro(`${cli} install`)
-  const conflict = flagConflictMessage(options.compact, options.minified)
-  if (conflict) {
-    log.error(conflict)
-    outro("Install failed.")
-    return 1
-  }
   const scope = await resolveInstallScope(options.scope)
   if (!scope) {
     outro("Install cancelled.")
     return 1
   }
-  const pluginOptions = resolveOptions({ compact: options.compact, minified: options.minified })
-  const result = registerPlugin(defaultPluginSpec(), pluginOptions, configDirForScope(scope))
+  const result = registerPlugin(defaultPluginSpec(), configDirForScope(scope))
   if (!result.ok) {
     if (!result.server.ok) log.error(result.server.message)
     if (!result.tui.ok) log.error(result.tui.message)

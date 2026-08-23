@@ -42,14 +42,8 @@ assert_spec() {
   local spec=$2
   node -e "
     const plugins = JSON.parse(require('node:fs').readFileSync(process.argv[1], 'utf8')).plugin
-    const want = process.argv[2]
-    const ok = (plugins || []).some((entry) => {
-      if (!Array.isArray(entry) || entry[0] !== want) return false
-      const opts = entry[1]
-      return Boolean(opts) && opts.compact === true && opts.minified === true
-    })
-    if (!ok) {
-      console.error('expected tuple', [want, { compact: true, minified: true }], 'in', process.argv[1], 'got', plugins)
+    if (!(plugins || []).includes(process.argv[2])) {
+      console.error('expected', process.argv[2], 'in', process.argv[1], 'got', plugins)
       process.exit(1)
     }
   " "$dir/opencode.json" "$spec"
