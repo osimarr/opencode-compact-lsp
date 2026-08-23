@@ -1,8 +1,17 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test"
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { clearPluginCaches, ensurePluginEntry } from "./config"
+import { dirname, join } from "node:path"
+import { fileURLToPath, pathToFileURL } from "node:url"
+import {
+  clearPluginCaches,
+  configDirForScope,
+  ensurePluginEntry,
+  matchesPluginEntry,
+  pluginCacheDirs,
+} from "./config"
+
+const pluginTs = join(dirname(fileURLToPath(import.meta.url)), "../plugin.ts")
 
 describe("ensurePluginEntry", () => {
   let configDir: string
@@ -54,6 +63,112 @@ describe("ensurePluginEntry", () => {
       plugin: ["other-plugin", ["opencode-compact-lsp", { compact: true, minified: true }]],
       model: "keep-me",
     })
+  })
+
+  test("preserves jsonc comments when adding a sibling plugin", () => {
+    writeFileSync(
+      join(configDir, "opencode.jsonc"),
+      `{
+  // keep this comment
+  "plugin": ["other-plugin"]
+}
+`,
+    )
+    const result = ensurePluginEntry("opencode-compact-lsp", { compact: true, minified: true }, configDir)
+    expect(result.ok).toBe(true)
+    expect(result.configPath).toBe(join(configDir, "opencode.jsonc"))
+    const text = readFileSync(join(configDir, "opencode.jsonc"), "utf-8")
+    expect(text).toContain("//")
+    expect(text).toContain("other-plugin")
+    expect(text).toContain("opencode-compact-lsp")
+  })
+
+  test("prefers opencode.jsonc when both json and jsonc exist", () => {
+    writeFileSync(
+      join(configDir, "opencode.json"),
+      `${JSON.stringify({ plugin: ["from-json"] }, null, 2)}\n`,
+    )
+    writeFileSync(
+      join(configDir, "opencode.jsonc"),
+      `${JSON.stringify({ plugin: ["from-jsonc"] }, null, 2)}\n`,
+    )
+    const result = ensurePluginEntry("opencode-compact-lsp", { compact: true, minified: true }, configDir)
+    expect(result.configPath).toBe(join(configDir, "opencode.jsonc"))
+    expect(JSON.parse(readFileSync(join(configDir, "opencode.jsonc"), "utf-8")).plugin).toEqual([
+      "from-jsonc",
+      ["opencode-compact-lsp", { compact: true, minified: true }],
+    ])
+    expect(JSON.parse(readFileSync(join(configDir, "opencode.json"), "utf-8"))).toEqual({
+      plugin: ["from-json"],
+    })
+  })
+
+  test("pins an unpinned string entry and keeps a single plugin slot", () => {
+    writeFileSync(
+      join(configDir, "opencode.json"),
+      `${JSON.stringify({ plugin: ["opencode-compact-lsp"] }, null, 2)}\n`,
+    )
+    const result = ensurePluginEntry("opencode-compact-lsp@0.1.0", { compact: true, minified: true }, configDir)
+    expect(result.action).toBe("updated")
+    expect(JSON.parse(readFileSync(join(configDir, "opencode.json"), "utf-8")).plugin).toEqual([
+      ["opencode-compact-lsp@0.1.0", { compact: true, minified: true }],
+    ])
+  })
+
+  test("strips extra option keys on an existing tuple", () => {
+    writeFileSync(
+      join(configDir, "opencode.json"),
+      `${JSON.stringify(
+        { plugin: [["opencode-compact-lsp", { compact: true, minified: true, extra: 1 }]] },
+        null,
+        2,
+      )}\n`,
+    )
+    const result = ensurePluginEntry("opencode-compact-lsp", { compact: true, minified: true }, configDir)
+    expect(result.action).toBe("updated")
+    expect(JSON.parse(readFileSync(join(configDir, "opencode.json"), "utf-8")).plugin).toEqual([
+      ["opencode-compact-lsp", { compact: true, minified: true }],
+    ])
+  })
+})
+
+describe("matchesPluginEntry", () => {
+  test("matches the package name, @tag, and tuple form", () => {
+    expect(matchesPluginEntry("opencode-compact-lsp")).toBe(true)
+    expect(matchesPluginEntry("other")).toBe(false)
+    expect(matchesPluginEntry(["opencode-compact-lsp", { compact: true, minified: true }])).toBe(true)
+    expect(matchesPluginEntry("opencode-compact-lsp@latest")).toBe(true)
+  })
+
+  test("does not match a relative plugin path", () => {
+    expect(matchesPluginEntry("../opencode-compact-lsp/src/plugin.ts")).toBe(false)
+  })
+
+  test("matches a file URL of this package plugin.ts", () => {
+    expect(matchesPluginEntry(pathToFileURL(pluginTs).href)).toBe(true)
+  })
+})
+
+describe("configDirForScope", () => {
+  test("project scope is cwd/.opencode", () => {
+    expect(configDirForScope("project", "/tmp/proj")).toBe(join("/tmp/proj", ".opencode"))
+  })
+})
+
+describe("pluginCacheDirs", () => {
+  test("lists only this package name and name@version dirs", () => {
+    const cacheDir = mkdtempSync(join(tmpdir(), "compact-lsp-cachedirs-"))
+    mkdirSync(join(cacheDir, "packages", "opencode-compact-lsp"), { recursive: true })
+    mkdirSync(join(cacheDir, "packages", "opencode-compact-lsp@latest"), { recursive: true })
+    mkdirSync(join(cacheDir, "packages", "other@1.0.0"), { recursive: true })
+    mkdirSync(join(cacheDir, "packages", "opencode-compact-lsp-extra"), { recursive: true })
+    expect(pluginCacheDirs(cacheDir).sort()).toEqual(
+      [
+        join(cacheDir, "packages", "opencode-compact-lsp"),
+        join(cacheDir, "packages", "opencode-compact-lsp@latest"),
+      ].sort(),
+    )
+    rmSync(cacheDir, { recursive: true, force: true })
   })
 })
 

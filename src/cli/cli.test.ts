@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs"
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -110,5 +110,132 @@ describe("cli", () => {
     const result = await runCli(["--version"], {})
     expect(result.code).toBe(0)
     expect(result.stdout.trim()).toBe(version)
+  })
+
+  test("--help exits 0 and lists version and install", async () => {
+    const result = await runCli(["--help"], {})
+    expect(result.code).toBe(0)
+    expect(`${result.stdout}${result.stderr}`).toContain(version)
+    expect(`${result.stdout}${result.stderr}`).toContain("install")
+  })
+
+  test("bunx user agent pins version and shows bunx intro", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "compact-lsp-cli-"))
+    dirs.push(dir)
+    const result = await runCli(["install", "--global"], {
+      OPENCODE_CONFIG_DIR: dir,
+      npm_config_user_agent: "bun/1.2.0",
+    })
+    expect(result.code).toBe(0)
+    expect(`${result.stdout}${result.stderr}`).toContain("bunx opencode-compact-lsp")
+    expect(plugins(dir)).toEqual([[`opencode-compact-lsp@${version}`, { compact: true, minified: true }]])
+  })
+
+  test("empty user agent shows unpinned install intro without npx", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "compact-lsp-cli-"))
+    dirs.push(dir)
+    const result = await runCli(["install", "--global"], {
+      OPENCODE_CONFIG_DIR: dir,
+      npm_config_user_agent: "",
+    })
+    expect(result.code).toBe(0)
+    expect(`${result.stdout}${result.stderr}`).toContain("opencode-compact-lsp install")
+    expect(`${result.stdout}${result.stderr}`).not.toContain("npx ")
+    expect(plugins(dir)).toEqual([["opencode-compact-lsp", { compact: true, minified: true }]])
+  })
+
+  test("--minified and --no-minified exits 1", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "compact-lsp-cli-"))
+    dirs.push(dir)
+    const result = await runCli(["install", "--global", "--minified", "--no-minified"], {
+      OPENCODE_CONFIG_DIR: dir,
+      npm_config_user_agent: "",
+    })
+    expect(result.code).toBe(1)
+    expect(`${result.stdout}${result.stderr}`).toContain("--minified")
+    expect(existsSync(join(dir, "opencode.json"))).toBe(false)
+  })
+
+  test("install --global --no-minified persists flags", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "compact-lsp-cli-"))
+    dirs.push(dir)
+    const result = await runCli(["install", "--global", "--no-minified"], {
+      OPENCODE_CONFIG_DIR: dir,
+      npm_config_user_agent: "",
+    })
+    expect(result.code).toBe(0)
+    expect(plugins(dir)[0]).toEqual(["opencode-compact-lsp", { compact: true, minified: false }])
+  })
+
+  test("doctor --fix --global --no-compact writes flags", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "compact-lsp-cli-"))
+    dirs.push(dir)
+    const result = await runCli(["doctor", "--fix", "--global", "--no-compact"], {
+      OPENCODE_CONFIG_DIR: dir,
+      npm_config_user_agent: "",
+    })
+    expect(result.code).toBe(0)
+    expect(plugins(dir)[0]).toEqual(["opencode-compact-lsp", { compact: false, minified: true }])
+  })
+
+  test("doctor --global on empty config dir reports not set", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "compact-lsp-cli-"))
+    dirs.push(dir)
+    const result = await runCli(["doctor", "--global"], {
+      OPENCODE_CONFIG_DIR: dir,
+      npm_config_user_agent: "",
+    })
+    expect(result.code).toBe(1)
+    expect(`${result.stdout}${result.stderr}`).toContain("not set")
+    expect(`${result.stdout}${result.stderr}`).toContain("install")
+  })
+
+  test("doctor --global reports parse error on garbage opencode.json", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "compact-lsp-cli-"))
+    dirs.push(dir)
+    writeFileSync(join(dir, "opencode.json"), "{ not json")
+    const result = await runCli(["doctor", "--global"], {
+      OPENCODE_CONFIG_DIR: dir,
+      npm_config_user_agent: "",
+    })
+    expect(result.code).toBe(1)
+    expect(`${result.stdout}${result.stderr}`).toContain("parse error")
+  })
+
+  test("doctor warns when the plugin is only in tui.json", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "compact-lsp-cli-"))
+    dirs.push(dir)
+    writeFileSync(join(dir, "tui.json"), `${JSON.stringify({ plugin: ["opencode-compact-lsp"] }, null, 2)}\n`)
+    const result = await runCli(["doctor", "--global"], {
+      OPENCODE_CONFIG_DIR: dir,
+      npm_config_user_agent: "",
+    })
+    expect(result.code).toBe(1)
+    expect(`${result.stdout}${result.stderr}`).toContain("tui.json")
+    expect(`${result.stdout}${result.stderr}`).toContain("belongs in opencode.json")
+  })
+
+  test("install --global does not create tui.json", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "compact-lsp-cli-"))
+    dirs.push(dir)
+    const result = await runCli(["install", "--global"], {
+      OPENCODE_CONFIG_DIR: dir,
+      npm_config_user_agent: "",
+    })
+    expect(result.code).toBe(0)
+    expect(existsSync(join(dir, "opencode.json"))).toBe(true)
+    expect(existsSync(join(dir, "tui.json"))).toBe(false)
+  })
+
+  test("doctor --project after install --project sees the project plugin", async () => {
+    const cwd = mkdtempSync(join(tmpdir(), "compact-lsp-proj-"))
+    const trap = mkdtempSync(join(tmpdir(), "compact-lsp-trap-"))
+    dirs.push(cwd, trap)
+    const env = { OPENCODE_CONFIG_DIR: trap, npm_config_user_agent: "" }
+    expect((await runCli(["install", "--project"], env, cwd)).code).toBe(0)
+    const result = await runCli(["doctor", "--project"], env, cwd)
+    expect(`${result.stdout}${result.stderr}`).toContain("plugin registered: yes")
+    expect(`${result.stdout}${result.stderr}`).toContain(join(cwd, ".opencode", "opencode.json"))
+    expect(existsSync(join(trap, "opencode.json"))).toBe(false)
   })
 })
