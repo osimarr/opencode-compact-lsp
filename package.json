@@ -9,7 +9,8 @@
   "files": ["dist", "src", "README.md", "LICENSE"],
   "scripts": {
     "test": "bun test",
-    "build": "bun build src/cli.ts --outfile dist/cli.js --target node --format esm && bun scripts/ensure-shebang.ts"
+    "build": "bun build src/cli.ts --outfile dist/cli.js --target node --format esm && bun scripts/ensure-shebang.ts",
+    "qa": "bash scripts/qa-cli.sh"
   },
   "peerDependencies": { "@opencode-ai/plugin": ">=1.0.0" },
   "dependencies": {
