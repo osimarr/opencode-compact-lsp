@@ -11,6 +11,10 @@ function plugins(dir: string): unknown[] {
   return JSON.parse(readFileSync(join(dir, "opencode.json"), "utf-8")).plugin
 }
 
+function tuiPlugins(dir: string): unknown[] {
+  return JSON.parse(readFileSync(join(dir, "tui.json"), "utf-8")).plugin
+}
+
 async function runCli(args: string[], env: Record<string, string>, cwd = root) {
   const proc = Bun.spawn(["bun", join(root, "src/cli.ts"), ...args], {
     cwd,
@@ -40,6 +44,7 @@ describe("cli", () => {
     })
     expect(result.code).toBe(0)
     expect(plugins(dir)).toEqual([["opencode-compact-lsp", { compact: true, minified: true }]])
+    expect(tuiPlugins(dir)).toEqual(["opencode-compact-lsp"])
   })
 
   test("install --no-compact --minified persists flags", async () => {
@@ -176,6 +181,7 @@ describe("cli", () => {
     })
     expect(result.code).toBe(0)
     expect(plugins(dir)[0]).toEqual(["opencode-compact-lsp", { compact: false, minified: true }])
+    expect(tuiPlugins(dir)).toEqual(["opencode-compact-lsp"])
   })
 
   test("doctor --global on empty config dir reports not set", async () => {
@@ -202,7 +208,7 @@ describe("cli", () => {
     expect(`${result.stdout}${result.stderr}`).toContain("parse error")
   })
 
-  test("doctor warns when the plugin is only in tui.json", async () => {
+  test("doctor reports missing opencode.json when the plugin is only in tui.json", async () => {
     const dir = mkdtempSync(join(tmpdir(), "compact-lsp-cli-"))
     dirs.push(dir)
     writeFileSync(join(dir, "tui.json"), `${JSON.stringify({ plugin: ["opencode-compact-lsp"] }, null, 2)}\n`)
@@ -211,11 +217,11 @@ describe("cli", () => {
       npm_config_user_agent: "",
     })
     expect(result.code).toBe(1)
-    expect(`${result.stdout}${result.stderr}`).toContain("tui.json")
-    expect(`${result.stdout}${result.stderr}`).toContain("belongs in opencode.json")
+    expect(`${result.stdout}${result.stderr}`).toContain("opencode.json plugin: no")
+    expect(`${result.stdout}${result.stderr}`).toContain("tui.json plugin: yes")
   })
 
-  test("install --global does not create tui.json", async () => {
+  test("install --global writes tui.json string spec", async () => {
     const dir = mkdtempSync(join(tmpdir(), "compact-lsp-cli-"))
     dirs.push(dir)
     const result = await runCli(["install", "--global"], {
@@ -224,7 +230,8 @@ describe("cli", () => {
     })
     expect(result.code).toBe(0)
     expect(existsSync(join(dir, "opencode.json"))).toBe(true)
-    expect(existsSync(join(dir, "tui.json"))).toBe(false)
+    expect(existsSync(join(dir, "tui.json"))).toBe(true)
+    expect(tuiPlugins(dir)).toEqual(["opencode-compact-lsp"])
   })
 
   test("doctor --project after install --project sees the project plugin", async () => {
@@ -234,8 +241,10 @@ describe("cli", () => {
     const env = { OPENCODE_CONFIG_DIR: trap, npm_config_user_agent: "" }
     expect((await runCli(["install", "--project"], env, cwd)).code).toBe(0)
     const result = await runCli(["doctor", "--project"], env, cwd)
-    expect(`${result.stdout}${result.stderr}`).toContain("plugin registered: yes")
+    expect(`${result.stdout}${result.stderr}`).toContain("opencode.json plugin: yes")
+    expect(`${result.stdout}${result.stderr}`).toContain("tui.json plugin: yes")
     expect(`${result.stdout}${result.stderr}`).toContain(join(cwd, ".opencode", "opencode.json"))
+    expect(existsSync(join(cwd, ".opencode", "tui.json"))).toBe(true)
     expect(existsSync(join(trap, "opencode.json"))).toBe(false)
   })
 })

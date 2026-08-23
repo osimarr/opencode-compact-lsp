@@ -120,6 +120,68 @@ export function hasPluginEntry(configDir = getOpenCodeConfigDir()): boolean {
   return plugins.some((entry) => matchesPluginEntry(entry))
 }
 
+export function hasTuiPluginEntry(configDir = getOpenCodeConfigDir()): boolean {
+  const file = detectJsoncFile(configDir, "tui")
+  if (file.format === "none") return false
+  const { value } = readJsoncFile(file.path)
+  const plugins = Array.isArray(value?.plugin) ? value.plugin : []
+  return plugins.some((entry) => matchesPluginEntry(entry))
+}
+
+export function ensureTuiPluginEntry(spec: string, configDir: string): PluginEntryResult {
+  const file = detectJsoncFile(configDir, "tui")
+  const configPath = file.path
+  if (file.format === "none") {
+    writeJsoncFile(configPath, { plugin: [spec] }, "json")
+    return {
+      ok: true,
+      action: "added",
+      message: `Created ${configPath} and added ${spec}`,
+      configPath,
+    }
+  }
+  const { value, error } = readJsoncFile(configPath)
+  if (error || !value) {
+    return {
+      ok: false,
+      action: "error",
+      message: `Could not parse ${configPath}: ${error ?? "unknown error"}`,
+      configPath,
+    }
+  }
+  const plugins = Array.isArray(value.plugin) ? [...value.plugin] : []
+  const index = plugins.findIndex((entry) => matchesPluginEntry(entry))
+  if (index >= 0) {
+    if (entryName(plugins[index]) === spec) {
+      return {
+        ok: true,
+        action: "already_present",
+        message: `${spec} is already registered in ${configPath}`,
+        configPath,
+      }
+    }
+    if (Array.isArray(plugins[index])) plugins[index] = [spec, ...plugins[index].slice(1)]
+    else plugins[index] = spec
+    value.plugin = plugins
+    writeJsoncFile(configPath, value, file.format)
+    return {
+      ok: true,
+      action: "updated",
+      message: `Updated ${configPath} to ${spec}`,
+      configPath,
+    }
+  }
+  plugins.push(spec)
+  value.plugin = plugins
+  writeJsoncFile(configPath, value, file.format)
+  return {
+    ok: true,
+    action: "added",
+    message: `Added ${spec} to ${configPath}`,
+    configPath,
+  }
+}
+
 export function ensurePluginEntry(spec: string, options: CompactLspOptions, configDir: string): PluginEntryResult {
   const file = detectJsoncFile(configDir, "opencode")
   const configPath = file.path
@@ -173,6 +235,16 @@ export function ensurePluginEntry(spec: string, options: CompactLspOptions, conf
     message: `Added ${spec} to ${configPath}`,
     configPath,
   }
+}
+
+export function registerPlugin(
+  spec: string,
+  options: CompactLspOptions,
+  configDir: string,
+): { ok: boolean; server: PluginEntryResult; tui: PluginEntryResult } {
+  const server = ensurePluginEntry(spec, options, configDir)
+  const tui = ensureTuiPluginEntry(spec, configDir)
+  return { ok: server.ok && tui.ok, server, tui }
 }
 
 export function pluginCacheDirs(cacheDir = getOpenCodeCacheDir()): string[] {

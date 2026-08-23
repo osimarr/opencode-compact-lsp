@@ -25,6 +25,8 @@ assert_pack() {
 }
 assert_pack "package/dist/cli.js"
 assert_pack "package/src/plugin.ts"
+assert_pack "package/src/tui.ts"
+assert_pack "package/src/plugin-id.ts"
 assert_pack "package/src/compact.ts"
 assert_pack "package/src/format.ts"
 assert_pack "package/src/options.ts"
@@ -51,6 +53,13 @@ assert_spec() {
       process.exit(1)
     }
   " "$dir/opencode.json" "$spec"
+  node -e "
+    const plugins = JSON.parse(require('node:fs').readFileSync(process.argv[1], 'utf8')).plugin
+    if (!(plugins || []).includes(process.argv[2])) {
+      console.error('expected', process.argv[2], 'in', process.argv[1], 'got', plugins)
+      process.exit(1)
+    }
+  " "$dir/tui.json" "$spec"
 }
 
 tgz_path="$ROOT/$tgz"
@@ -138,7 +147,15 @@ node -e "
     console.error('expected 1', process.argv[2], 'entry, got', n, plugins)
     process.exit(1)
   }
-" "$d_rep/opencode.json" "$PLUGIN"
+ " "$d_rep/opencode.json" "$PLUGIN"
+node -e "
+  const plugins = JSON.parse(require('node:fs').readFileSync(process.argv[1], 'utf8')).plugin
+  const n = plugins.filter((p) => String(p).startsWith(process.argv[2])).length
+  if (n !== 1) {
+    console.error('expected 1', process.argv[2], 'tui entry, got', n, plugins)
+    process.exit(1)
+  }
+" "$d_rep/tui.json" "$PLUGIN"
 
 # shellcheck source=install-opencode.sh
 source "$(dirname "$0")/install-opencode.sh"
