@@ -54,3 +54,7 @@ Builtin `lsp` is behind `OPENCODE_EXPERIMENTAL_LSP_TOOL`. Without it the hook is
 | `src/cli.ts` | `install` / `doctor` |
 
 Omit `compact` / `minified` → `true`. Both false is identity.
+
+## Releases
+
+Version comes from `package.json`, not from the git tag. Tag must be `v$version` (`next`) or `v$version-release` (`latest`). Workflow: `.github/workflows/publish.yml` → `scripts/npm-release.sh`. Token: `secrets.NPM_TOKEN` or `vars.NPM_TOKEN`. Do not `npm publish` from a developer machine except the first bootstrap.
