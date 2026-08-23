@@ -25,43 +25,32 @@ describe("ensurePluginEntry", () => {
     rmSync(configDir, { recursive: true, force: true })
   })
 
-  test("creates opencode.json with the plugin tuple", () => {
-    const result = ensurePluginEntry("opencode-compact-lsp", { compact: true, minified: true }, configDir)
+  test("creates opencode.json with the plugin spec string", () => {
+    const result = ensurePluginEntry("opencode-compact-lsp", configDir)
     expect(result.ok).toBe(true)
     expect(result.action).toBe("added")
     expect(result.configPath).toBe(join(configDir, "opencode.json"))
     expect(JSON.parse(readFileSync(join(configDir, "opencode.json"), "utf-8"))).toEqual({
-      plugin: [["opencode-compact-lsp", { compact: true, minified: true }]],
+      plugin: ["opencode-compact-lsp"],
     })
   })
 
-  test("second call with the same spec and options is already_present", () => {
-    ensurePluginEntry("opencode-compact-lsp", { compact: true, minified: true }, configDir)
-    const result = ensurePluginEntry("opencode-compact-lsp", { compact: true, minified: true }, configDir)
+  test("second call with the same spec is already_present", () => {
+    ensurePluginEntry("opencode-compact-lsp", configDir)
+    const result = ensurePluginEntry("opencode-compact-lsp", configDir)
     expect(result.action).toBe("already_present")
-    expect(JSON.parse(readFileSync(join(configDir, "opencode.json"), "utf-8")).plugin).toEqual([
-      ["opencode-compact-lsp", { compact: true, minified: true }],
-    ])
+    expect(JSON.parse(readFileSync(join(configDir, "opencode.json"), "utf-8")).plugin).toEqual(["opencode-compact-lsp"])
   })
 
-  test("second call with different options updates the tuple", () => {
-    ensurePluginEntry("opencode-compact-lsp", { compact: true, minified: true }, configDir)
-    const result = ensurePluginEntry("opencode-compact-lsp", { compact: false, minified: true }, configDir)
-    expect(result.action).toBe("updated")
-    expect(JSON.parse(readFileSync(join(configDir, "opencode.json"), "utf-8")).plugin).toEqual([
-      ["opencode-compact-lsp", { compact: false, minified: true }],
-    ])
-  })
-
-  test("converts an existing string entry to a tuple", () => {
+  test("leaves sibling plugins in place", () => {
     writeFileSync(
       join(configDir, "opencode.json"),
       `${JSON.stringify({ plugin: ["other-plugin", "opencode-compact-lsp"], model: "keep-me" }, null, 2)}\n`,
     )
-    const result = ensurePluginEntry("opencode-compact-lsp", { compact: true, minified: true }, configDir)
-    expect(result.action).toBe("updated")
+    const result = ensurePluginEntry("opencode-compact-lsp", configDir)
+    expect(result.action).toBe("already_present")
     expect(JSON.parse(readFileSync(join(configDir, "opencode.json"), "utf-8"))).toEqual({
-      plugin: ["other-plugin", ["opencode-compact-lsp", { compact: true, minified: true }]],
+      plugin: ["other-plugin", "opencode-compact-lsp"],
       model: "keep-me",
     })
   })
@@ -75,7 +64,7 @@ describe("ensurePluginEntry", () => {
 }
 `,
     )
-    const result = ensurePluginEntry("opencode-compact-lsp", { compact: true, minified: true }, configDir)
+    const result = ensurePluginEntry("opencode-compact-lsp", configDir)
     expect(result.ok).toBe(true)
     expect(result.configPath).toBe(join(configDir, "opencode.jsonc"))
     const text = readFileSync(join(configDir, "opencode.jsonc"), "utf-8")
@@ -93,11 +82,11 @@ describe("ensurePluginEntry", () => {
       join(configDir, "opencode.jsonc"),
       `${JSON.stringify({ plugin: ["from-jsonc"] }, null, 2)}\n`,
     )
-    const result = ensurePluginEntry("opencode-compact-lsp", { compact: true, minified: true }, configDir)
+    const result = ensurePluginEntry("opencode-compact-lsp", configDir)
     expect(result.configPath).toBe(join(configDir, "opencode.jsonc"))
     expect(JSON.parse(readFileSync(join(configDir, "opencode.jsonc"), "utf-8")).plugin).toEqual([
       "from-jsonc",
-      ["opencode-compact-lsp", { compact: true, minified: true }],
+      "opencode-compact-lsp",
     ])
     expect(JSON.parse(readFileSync(join(configDir, "opencode.json"), "utf-8"))).toEqual({
       plugin: ["from-json"],
@@ -109,14 +98,14 @@ describe("ensurePluginEntry", () => {
       join(configDir, "opencode.json"),
       `${JSON.stringify({ plugin: ["opencode-compact-lsp"] }, null, 2)}\n`,
     )
-    const result = ensurePluginEntry("opencode-compact-lsp@0.1.0", { compact: true, minified: true }, configDir)
+    const result = ensurePluginEntry("opencode-compact-lsp@0.1.0", configDir)
     expect(result.action).toBe("updated")
     expect(JSON.parse(readFileSync(join(configDir, "opencode.json"), "utf-8")).plugin).toEqual([
-      ["opencode-compact-lsp@0.1.0", { compact: true, minified: true }],
+      "opencode-compact-lsp@0.1.0",
     ])
   })
 
-  test("strips extra option keys on an existing tuple", () => {
+  test("replaces an options tuple with a spec string", () => {
     writeFileSync(
       join(configDir, "opencode.json"),
       `${JSON.stringify(
@@ -125,11 +114,9 @@ describe("ensurePluginEntry", () => {
         2,
       )}\n`,
     )
-    const result = ensurePluginEntry("opencode-compact-lsp", { compact: true, minified: true }, configDir)
+    const result = ensurePluginEntry("opencode-compact-lsp", configDir)
     expect(result.action).toBe("updated")
-    expect(JSON.parse(readFileSync(join(configDir, "opencode.json"), "utf-8")).plugin).toEqual([
-      ["opencode-compact-lsp", { compact: true, minified: true }],
-    ])
+    expect(JSON.parse(readFileSync(join(configDir, "opencode.json"), "utf-8")).plugin).toEqual(["opencode-compact-lsp"])
   })
 })
 
