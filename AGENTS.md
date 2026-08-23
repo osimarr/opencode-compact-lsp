@@ -57,4 +57,4 @@ Omit `compact` / `minified` → `true`. Both false is identity.
 
 ## Releases
 
-Version comes from `package.json`. Tag must be `v$version` and publishes to **next**. Do not automate `latest`; promote with `npm dist-tag add`. Workflow: `.github/workflows/publish.yml` → `scripts/npm-release.sh`. Token: `secrets.NPM_TOKEN` or `vars.NPM_TOKEN`.
+Version comes from `package.json`. Tag must be `v$version` and publishes to **next**. Do not automate `latest`; promote with `npm dist-tag add`. Workflow: `.github/workflows/publish.yml` (`environment: npm`, OIDC `id-token: write`). Token not used.
