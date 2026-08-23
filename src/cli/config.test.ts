@@ -7,6 +7,7 @@ import {
   clearPluginCaches,
   configDirForScope,
   ensurePluginEntry,
+  ensureTuiPluginEntry,
   matchesPluginEntry,
   pluginCacheDirs,
 } from "./config"
@@ -129,6 +130,48 @@ describe("ensurePluginEntry", () => {
     expect(JSON.parse(readFileSync(join(configDir, "opencode.json"), "utf-8")).plugin).toEqual([
       ["opencode-compact-lsp", { compact: true, minified: true }],
     ])
+  })
+})
+
+describe("ensureTuiPluginEntry", () => {
+  let configDir: string
+
+  beforeEach(() => {
+    configDir = mkdtempSync(join(tmpdir(), "compact-lsp-tui-"))
+  })
+
+  afterEach(() => {
+    rmSync(configDir, { recursive: true, force: true })
+  })
+
+  test("creates tui.json with a string spec", () => {
+    const result = ensureTuiPluginEntry("opencode-compact-lsp", configDir)
+    expect(result.ok).toBe(true)
+    expect(result.action).toBe("added")
+    expect(result.configPath).toBe(join(configDir, "tui.json"))
+    expect(JSON.parse(readFileSync(join(configDir, "tui.json"), "utf-8"))).toEqual({
+      plugin: ["opencode-compact-lsp"],
+    })
+  })
+
+  test("second call with the same spec is already_present", () => {
+    ensureTuiPluginEntry("opencode-compact-lsp", configDir)
+    const result = ensureTuiPluginEntry("opencode-compact-lsp", configDir)
+    expect(result.action).toBe("already_present")
+  })
+
+  test("replaces an unpinned spec with a pinned spec in place", () => {
+    ensureTuiPluginEntry("opencode-compact-lsp", configDir)
+    const result = ensureTuiPluginEntry("opencode-compact-lsp@0.1.0", configDir)
+    expect(result.action).toBe("updated")
+    expect(JSON.parse(readFileSync(join(configDir, "tui.json"), "utf-8")).plugin).toEqual(["opencode-compact-lsp@0.1.0"])
+  })
+
+  test("keeps a single slot when replacing @latest then @next", () => {
+    ensureTuiPluginEntry("opencode-compact-lsp@0.1.0", configDir)
+    ensureTuiPluginEntry("opencode-compact-lsp@latest", configDir)
+    ensureTuiPluginEntry("opencode-compact-lsp@next", configDir)
+    expect(JSON.parse(readFileSync(join(configDir, "tui.json"), "utf-8")).plugin).toEqual(["opencode-compact-lsp@next"])
   })
 })
 

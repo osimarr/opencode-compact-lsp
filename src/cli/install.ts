@@ -1,6 +1,6 @@
 import { intro, log, note, outro } from "@clack/prompts"
 import { resolveOptions } from "../options"
-import { configDirForScope, defaultPluginSpec, ensurePluginEntry } from "./config"
+import { configDirForScope, defaultPluginSpec, registerPlugin } from "./config"
 import { detectCli } from "./detect"
 import type { FlagTriple, InstallScopeFlag } from "./flags"
 import { resolveInstallScope } from "./scope"
@@ -30,13 +30,15 @@ export async function runInstall(options: {
     return 1
   }
   const pluginOptions = resolveOptions({ compact: options.compact, minified: options.minified })
-  const result = ensurePluginEntry(defaultPluginSpec(), pluginOptions, configDirForScope(scope))
+  const result = registerPlugin(defaultPluginSpec(), pluginOptions, configDirForScope(scope))
   if (!result.ok) {
-    log.error(result.message)
+    if (!result.server.ok) log.error(result.server.message)
+    if (!result.tui.ok) log.error(result.tui.message)
     outro("Install failed.")
     return 1
   }
-  log.success(result.message)
+  log.success(result.server.message)
+  log.success(result.tui.message)
   note(`Restart OpenCode so the plugin loads.\nVerify with: \`${cli} doctor\`.`, "Next steps")
   outro("Done.")
   return 0

@@ -5,10 +5,11 @@ import {
   clearPluginCaches,
   configDirForScope,
   defaultPluginSpec,
-  ensurePluginEntry,
   hasPluginEntry,
+  hasTuiPluginEntry,
   matchesPluginEntry,
   PLUGIN_NAME,
+  registerPlugin,
 } from "./config"
 import { detectCli } from "./detect"
 import type { FlagTriple, InstallScopeFlag } from "./flags"
@@ -23,14 +24,6 @@ function hostVersion(): string | undefined {
   } catch {
     return undefined
   }
-}
-
-function hasTuiPluginEntry(configDir: string): boolean {
-  const file = detectJsoncFile(configDir, "tui")
-  if (file.format === "none") return false
-  const { value } = readJsoncFile(file.path)
-  const plugins = Array.isArray(value?.plugin) ? value.plugin : []
-  return plugins.some((entry) => matchesPluginEntry(entry))
 }
 
 function tupleOptions(configDir: string): CompactLspOptions | undefined {
@@ -93,13 +86,15 @@ export async function runDoctor(options: {
       return 1
     }
     const pluginOptions = resolveOptions({ compact: options.compact, minified: options.minified })
-    const result = ensurePluginEntry(defaultPluginSpec(), pluginOptions, configDirForScope(scope))
+    const result = registerPlugin(defaultPluginSpec(), pluginOptions, configDirForScope(scope))
     if (!result.ok) {
-      log.error(result.message)
+      if (!result.server.ok) log.error(result.server.message)
+      if (!result.tui.ok) log.error(result.tui.message)
       outro("Fix failed.")
       return 1
     }
-    log.success(result.message)
+    log.success(result.server.message)
+    log.success(result.tui.message)
     note("Restart OpenCode so the plugin loads.", "Next steps")
     outro("Done.")
     return 0
@@ -140,8 +135,10 @@ export async function runDoctor(options: {
   }
 
   const registered = hasPluginEntry(configDir)
-  log.info(`  plugin registered: ${registered ? "yes" : "no"}`)
-  if (!registered) {
+  const tuiRegistered = hasTuiPluginEntry(configDir)
+  log.info(`  opencode.json plugin: ${registered ? "yes" : "no"}`)
+  log.info(`  tui.json plugin: ${tuiRegistered ? "yes" : "no"}`)
+  if (!registered || !tuiRegistered) {
     log.warn(`  plugin registration can be fixed with \`${cli} install\` or \`${cli} doctor --fix\``)
     problems = true
   }
@@ -149,12 +146,12 @@ export async function runDoctor(options: {
   if (optionsFromTuple) {
     log.info(`  options: compact=${optionsFromTuple.compact} minified=${optionsFromTuple.minified}`)
   }
-  if (hasTuiPluginEntry(configDir) && !registered) {
-    log.warn(`  ${PLUGIN_NAME} is in tui.json — this is a server plugin and belongs in opencode.json`)
-  }
 
   if (problems) {
-    note(`Run \`${cli} install\` or \`${cli} doctor --fix\` to register ${PLUGIN_NAME} in opencode.json.`, "Tips")
+    note(
+      `Run \`${cli} install\` or \`${cli} doctor --fix\` to register ${PLUGIN_NAME} in opencode.json and tui.json.`,
+      "Tips",
+    )
     outro("Done — some issues found.")
     return 1
   }
