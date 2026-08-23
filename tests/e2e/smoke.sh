@@ -13,7 +13,7 @@ mkdir -p "$OPENCODE_CONFIG_DIR"
 
 bun run build
 bun dist/cli.js install --global
-PLUGIN="$(python3 -c "from pathlib import Path; print((Path(r'$ROOT') / 'src' / 'plugin.ts').resolve())")"
+PLUGIN="$(python3 -c "from pathlib import Path; print(Path(r'$ROOT').resolve())")"
 ROOT="$ROOT" PLUGIN="$PLUGIN" python3 - <<'PY'
 import json, os
 from pathlib import Path
