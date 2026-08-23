@@ -3,19 +3,43 @@
   "version": "0.1.0",
   "type": "module",
   "description": "OpenCode plugin: compact/minify builtin lsp tool output",
+  "author": "dacohen1",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/osimarr/opencode-compact-lsp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/osimarr/opencode-compact-lsp/issues"
+  },
+  "homepage": "https://github.com/osimarr/opencode-compact-lsp",
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": { "opencode-compact-lsp": "./dist/cli.js" },
-  "exports": { ".": "./src/plugin.ts" },
   "files": ["dist", "src", "README.md", "LICENSE"],
+  "exports": {
+    ".": "./src/plugin.ts",
+    "./server": "./src/plugin.ts",
+    "./tui": "./src/tui.ts"
+  },
+  "engines": {
+    "opencode": ">=1.18.0"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": ">=1.18.0"
+  },
   "scripts": {
     "test": "bun test",
     "build": "bun build src/cli.ts --outfile dist/cli.js --target node --format esm && bun scripts/ensure-shebang.ts",
-    "qa": "bash scripts/qa-cli.sh"
+    "qa": "bash scripts/qa-cli.sh",
+    "prepublishOnly": "bun test && bun run build"
   },
-  "peerDependencies": { "@opencode-ai/plugin": ">=1.0.0" },
   "dependencies": {
     "@clack/prompts": "1.7.0",
     "comment-json": "5.0.0"
   },
-  "devDependencies": { "@opencode-ai/plugin": "^1.18.0" }
+  "devDependencies": {
+    "@opencode-ai/plugin": "^1.18.0"
+  }
 }
