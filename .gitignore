@@ -36,3 +36,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.iml
+
+.opencode/
+docs/superpowers/
