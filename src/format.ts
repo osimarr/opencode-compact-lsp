@@ -1,4 +1,5 @@
 import { compactValue } from "./compact"
+import { formatSymbolOutline, isSymbolForest } from "./outline"
 import type { CompactLspOptions } from "./options"
 
 export type HookOutput = { title: string; output: string; metadata: { result?: unknown } }
@@ -19,5 +20,6 @@ export function applyLspOutput(options: CompactLspOptions, hook: HookOutput): st
   }
 
   const value = options.compact ? compactValue(source) : source
+  if (options.compact && isSymbolForest(value)) return formatSymbolOutline(value)
   return JSON.stringify(value, null, options.minified ? undefined : 2)
 }

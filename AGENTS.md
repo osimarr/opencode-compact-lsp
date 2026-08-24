@@ -50,7 +50,8 @@ Builtin `lsp` is behind `OPENCODE_EXPERIMENTAL_LSP_TOOL`. Without it the hook is
 | `src/plugin.ts` | `tool.execute.after` hook |
 | `src/tui.ts` | TUI module (`id` + empty `tui`) |
 | `src/compact.ts` | Protocol JSON → DTO |
-| `src/format.ts` | `applyLspOutput` flags + stringify |
+| `src/outline.ts` | Symbol DTO → indented outline |
+| `src/format.ts` | `applyLspOutput` flags + stringify / outline |
 | `src/cli.ts` | `install` / `doctor` |
 
 Omit `compact` / `minified` → `true`. Both false is identity.
