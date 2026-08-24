@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import pluginFn, {
+import pluginFn from "./plugin"
+import {
   __resetRecorderFactoryForTest,
   __resetRecorderForTest,
   __setRecorderFactoryForTest,
   __setRecorderForTest,
-} from "./plugin"
+} from "./plugin-seams"
 
 describe("plugin", () => {
   test("ignores non-lsp tools", async () => {
@@ -29,7 +30,7 @@ describe("plugin", () => {
   })
   test("does not register a tool", async () => {
     const plugin = await pluginFn({} as never, { compact: true, minified: true })
-    expect(plugin.tool).toBeUndefined()
+    expect("tool" in plugin).toBe(false)
   })
   test("attachments survive rewrite", async () => {
     const plugin = await pluginFn({} as never, { compact: true, minified: true })

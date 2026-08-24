@@ -6,33 +6,18 @@ import type { Recorder } from "./stats/recorder"
 import * as path from "node:path"
 import { canonicalProjectIdentity, deriveProjectKey, resolveStateRoot } from "./stats/identity"
 import { ensureIdentityKey } from "./stats/identity-store"
-
-let testFactory: typeof defaultCreateRecorder | null = null
-let testRecorder: Recorder | null = null
-
-export function __setRecorderFactoryForTest(factory: typeof defaultCreateRecorder | null): void {
-  testFactory = factory
-}
-export function __resetRecorderFactoryForTest(): void {
-  testFactory = null
-}
-export function __setRecorderForTest(recorder: Recorder | null): void {
-  testRecorder = recorder
-}
-export function __resetRecorderForTest(): void {
-  testRecorder = null
-}
+import { seams } from "./plugin-seams"
 
 export default (async (_input, raw) => {
   const options = resolveOptions(raw)
   let recorder: Recorder | null = null
 
-  if (testRecorder) {
-    recorder = testRecorder
+  if (seams.recorder) {
+    recorder = seams.recorder
   } else {
-    const factory = testFactory ?? defaultCreateRecorder
+    const factory = seams.factory ?? defaultCreateRecorder
     const hasDirectory = typeof (_input as any)?.directory === "string" && (_input as any).directory.length > 0
-    const shouldAttempt = hasDirectory || testFactory !== null
+    const shouldAttempt = hasDirectory || seams.factory !== null
     if (shouldAttempt) {
       let ctx: { stateRoot: string; projectKey: string; projectDir: string; identityKey: Buffer | null } | null = null
       try {
