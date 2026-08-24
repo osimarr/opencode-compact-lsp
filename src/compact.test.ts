@@ -3,6 +3,7 @@ import { compactValue } from "./compact"
 import {
   KIND_NAMES,
   callHierarchyItem,
+  flatDocumentSymbols,
   hoverMarkup,
   hoverNullSlot,
   incomingCall,
@@ -189,6 +190,23 @@ describe("compactValue", () => {
         line: 37,
         column: 14,
       })
+    })
+
+    test("nests flat SymbolInformation by containerName", () => {
+      expect(compactValue(flatDocumentSymbols)).toEqual([{
+        name: "LspTool",
+        kind: "Constant",
+        path: "/home/david/src/tool/lsp.ts",
+        line: 37,
+        column: 1,
+        children: [{
+          name: "execute",
+          kind: "Method",
+          path: "/home/david/src/tool/lsp.ts",
+          line: 46,
+          column: 9,
+        }],
+      }])
     })
 
     test("empty children are omitted", () => {
