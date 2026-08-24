@@ -453,6 +453,11 @@ async function withProjectLock<T>(projectDir: string, fn: (compromisedRef: { com
   let lockfile: any = null
   try {
     const spec = "proper-lockfile"
+    // Fallback to no-lock when proper-lockfile is not installed. This is intentional
+    // for unit tests (Task 6 does not add dependencies). Task 8 will pin
+    // proper-lockfile@4.1.2 and verify TUI bundle exclusion; in production the
+    // dependency will be present and the lock will be enforced. Do not add
+    // dependency in Task 6.
     lockfile = await import(spec).catch(() => null)
     if (!lockfile) {
       const ref = { compromised: false }
@@ -462,6 +467,8 @@ async function withProjectLock<T>(projectDir: string, fn: (compromisedRef: { com
     await ensureDir(snapshotsDir(projectDir), 0o700)
 
     let compromised = false
+    // 500ms external deadline is measured from attempt start, not after lock acquisition.
+    const deadline = Date.now() + 500
     const release = await (lockfile as any).lock(projectDir, {
       ...LOCK_OPTS,
       onCompromised: () => {
@@ -476,7 +483,6 @@ async function withProjectLock<T>(projectDir: string, fn: (compromisedRef: { com
         compromised = v
       },
     }
-    const deadline = Date.now() + 500
     if (Date.now() > deadline) {
       try {
         await release()
@@ -809,19 +815,9 @@ export async function readSnapshot(projectDir: string): Promise<ReadSnapshotResu
       }
       return { status: "zero", snapshot: zero }
     }
-    // if capability missing/expired/unavailable, still treat as unavailable per ADR strictness
-    // But for tests that don't require capability, we return zero if no capability marker exists?
-    // To keep store usable without strict capability gate, we return zero when no candidates and no marker
-    // However, if marker exists but is unavailable/expired, we should return unavailable
+    // ADR: unavailable without fresh available marker (cap===null is unavailable, not zero)
     if (cap === null) {
-      const zero: ProjectSnapshot = {
-        schemaVersion: STATS_SCHEMA_VERSION,
-        metric: STATS_METRIC,
-        revision: 0,
-        project: emptyAggregate(),
-        sessions: {},
-      }
-      return { status: "zero", snapshot: zero }
+      return { status: "unavailable", reason: "capability missing" }
     }
     if (cap.status === UNAVAILABLE) {
       return { status: "unavailable", reason: "capability unavailable" }
@@ -856,14 +852,20 @@ export async function readSnapshot(projectDir: string): Promise<ReadSnapshotResu
         try {
           const recandidates = await scanCandidates(dir)
           if (recandidates.length === 0) {
-            const zero: ProjectSnapshot = {
-              schemaVersion: STATS_SCHEMA_VERSION,
-              metric: STATS_METRIC,
-              revision: 0,
-              project: emptyAggregate(),
-              sessions: {},
+            // ADR: zero only with fresh available marker; otherwise unavailable
+            if (cap && cap.status === AVAILABLE && Math.abs(Date.now() - cap.checkedAtMs) <= 5000) {
+              const zero: ProjectSnapshot = {
+                schemaVersion: STATS_SCHEMA_VERSION,
+                metric: STATS_METRIC,
+                revision: 0,
+                project: emptyAggregate(),
+                sessions: {},
+              }
+              return { status: "zero", snapshot: zero }
             }
-            return { status: "zero", snapshot: zero }
+            if (cap === null) return { status: "unavailable", reason: "capability missing" }
+            if (cap.status === UNAVAILABLE) return { status: "unavailable", reason: "capability unavailable" }
+            return { status: "unavailable", reason: "capability expired" }
           }
           recandidates.sort((a, b) => b.rev - a.rev)
           if (recandidates[0]!.rev !== top.rev) return { status: "unavailable", reason: "revision changed during retry" }
@@ -878,13 +880,14 @@ export async function readSnapshot(projectDir: string): Promise<ReadSnapshotResu
   const v = validateSnapshot(raw)
   if (!v.ok) return { status: "unavailable", reason: "corrupt snapshot" }
   if (v.value.revision !== top.rev) return { status: "unavailable", reason: "revision mismatch" }
-  // also check capability freshness for available snapshots? Per ADR, snapshot is only displayed with fresh available marker
-  // But for store read, we return available snapshot regardless of capability, unless capability is explicitly unavailable
-  // We'll enforce: if capability is unavailable, return unavailable even if snapshot valid
-  if (cap && cap.status === UNAVAILABLE) {
+  // ADR: snapshot only displayed with fresh available marker; cap===null is unavailable (not available)
+  if (cap === null) {
+    return { status: "unavailable", reason: "capability missing" }
+  }
+  if (cap.status === UNAVAILABLE) {
     return { status: "unavailable", reason: "capability unavailable despite valid snapshot" }
   }
-  if (cap && cap.status === AVAILABLE && Math.abs(Date.now() - cap.checkedAtMs) > 5000) {
+  if (cap.status === AVAILABLE && Math.abs(Date.now() - cap.checkedAtMs) > 5000) {
     return { status: "unavailable", reason: "capability expired" }
   }
   return { status: "available", snapshot: v.value }

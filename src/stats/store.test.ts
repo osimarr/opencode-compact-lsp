@@ -164,13 +164,9 @@ describe("store", () => {
 
   test("readSnapshot unavailable when capability missing or expired", async () => {
     const projectDir = await mkTempProject()
-    // do not ensure capability, so missing marker => unavailable or zero?
-    // per ADR, missing marker during grace is initializing, after 5s unavailable
-    // For store, without marker, we treat as unavailable (or zero if we allow)
-    // We'll test that ensureCapability creates available, and without it, commit is blocked
+    // ADR: without fresh available marker, readSnapshot is unavailable (not zero)
     const snapNoCap = await readSnapshot(projectDir)
-    // without capability, should be unavailable (or zero if we treat as unavailable)
-    // We allow either but ensure that after ensureCapability it becomes zero/available
+    expect(snapNoCap.status).toBe("unavailable")
     await ensureCapability(projectDir)
     const snapWithCap = await readSnapshot(projectDir)
     expect(["zero", "available"]).toContain(snapWithCap.status)
