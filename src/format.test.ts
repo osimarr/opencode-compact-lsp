@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { applyLspOutput } from "./format"
-import { callHierarchyItem, documentSymbolTree, hoverMarkup, symbolInformation } from "./fixtures/lsp"
+import { callHierarchyItem, documentSymbolTree, flatDocumentSymbols, hoverMarkup, symbolInformation } from "./fixtures/lsp"
 
 const loc = [{ uri: "file:///a.ts", range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } } }]
 const hook = { title: "t", output: JSON.stringify(loc, null, 2), metadata: { result: loc } }
@@ -91,6 +91,37 @@ describe("applyLspOutput", () => {
   test("compact documentSymbol is an indented outline, not JSON", () => {
     const out = applyLspOutput({ compact: true, minified: true }, compactHook(documentSymbolTree))
     expect(out).toBe("37:14 Constant LspTool\n  46:17 Method execute")
+  })
+  test("flat SymbolInformation documentSymbol nests by containerName", () => {
+    const out = applyLspOutput({ compact: true, minified: true }, compactHook(flatDocumentSymbols))
+    expect(out).toBe("37:1 Constant LspTool\n  46:9 Method execute")
+  })
+  test("containerName nesting is three levels deep", () => {
+    const tree = [
+      { name: "Outer", kind: 5, location: loc[0] },
+      {
+        name: "mid",
+        kind: 6,
+        location: { uri: "file:///a.ts", range: { start: { line: 1, character: 2 }, end: { line: 4, character: 1 } } },
+        containerName: "Outer",
+      },
+      {
+        name: "inner",
+        kind: 7,
+        location: { uri: "file:///a.ts", range: { start: { line: 2, character: 4 }, end: { line: 3, character: 5 } } },
+        containerName: "mid",
+      },
+    ]
+    const out = applyLspOutput({ compact: true, minified: true }, compactHook(tree))
+    expect(out).toBe("1:1 Class Outer\n  2:3 Method mid\n    3:5 Property inner")
+  })
+  test("workspace symbols in different files keep path", () => {
+    const symbols = [
+      { name: "Foo", kind: 5, location: { uri: "file:///a.ts", range: { start: { line: 0, character: 0 }, end: { line: 1, character: 0 } } } },
+      { name: "Bar", kind: 5, location: { uri: "file:///b.ts", range: { start: { line: 0, character: 0 }, end: { line: 1, character: 0 } } } },
+    ]
+    const out = applyLspOutput({ compact: true, minified: true }, compactHook(symbols))
+    expect(out).toBe("1:1 Class Foo /a.ts\n1:1 Class Bar /b.ts")
   })
   test("outline indents each child level by two spaces", () => {
     const tree = [{

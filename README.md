@@ -88,7 +88,7 @@ Same `goToDefinition` hit under each flag pair. OpenCode without this plugin is 
 [{"path":"/home/david/projects/opencode/opencode/packages/opencode/src/tool/lsp.ts","line":37,"column":14,"end_line":37,"end_column":21}]
 ```
 
-`documentSymbol` drops `selectionRange` / `detail`, names the kind, and prints an outline (`line:column kind name`, two-space indent per child). `workspaceSymbol` / call hierarchy append `path` when present:
+`documentSymbol` drops `selectionRange` / `detail`, names the kind, and prints an outline (`line:column kind name`, two-space indent per child). Flat `SymbolInformation[]` (OpenCode does not advertise hierarchical document symbols) is nested via `containerName`. Same-file `path` is omitted; `workspaceSymbol` / call hierarchy still append `path` when files differ or the result is a single symbol:
 
 ```json
 {

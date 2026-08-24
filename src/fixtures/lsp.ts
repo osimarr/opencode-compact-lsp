@@ -82,6 +82,21 @@ export const symbolInformation = {
   containerName: "lsp",
 }
 
+/** textDocument/documentSymbol as SymbolInformation[] when hierarchical support is off. */
+export const flatDocumentSymbols = [
+  {
+    name: "LspTool",
+    kind: 14,
+    location: location(TOOL_URI, 36, 0, 111, 1),
+  },
+  {
+    name: "execute",
+    kind: 6,
+    location: location(TOOL_URI, 45, 8, 110, 11),
+    containerName: "LspTool",
+  },
+]
+
 /** Hierarchical DocumentSymbol tree. */
 export const documentSymbolTree = [{
   name: "LspTool",
