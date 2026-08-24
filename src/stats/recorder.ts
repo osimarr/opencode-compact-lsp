@@ -11,6 +11,7 @@ export type RecorderCtx = {
   stateRoot: string
   projectKey: string
   projectDir: string
+  identityKey?: Buffer | null
 }
 
 export type Recorder = {

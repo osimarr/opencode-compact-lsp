@@ -1,4 +1,5 @@
 import { STATS_SCHEMA_VERSION, STATS_METRIC, type Aggregate } from "./contract"
+import { hasDuplicateKeys } from "./json-dup"
 
 export type ProjectSnapshot = {
   schemaVersion: typeof STATS_SCHEMA_VERSION
@@ -6,288 +7,6 @@ export type ProjectSnapshot = {
   revision: number
   project: Aggregate
   sessions: Record<string, Aggregate>
-}
-
-// ---- duplicate-aware JSON detection ----
-
-type Token =
-  | { type: "{"; raw: string }
-  | { type: "}"; raw: string }
-  | { type: "["; raw: string }
-  | { type: "]"; raw: string }
-  | { type: ":"; raw: string }
-  | { type: ","; raw: string }
-  | { type: "string"; value: string; raw: string }
-  | { type: "number"; value: string; raw: string }
-  | { type: "literal"; value: string; raw: string }
-
-function tokenize(json: string): Token[] {
-  const tokens: Token[] = []
-  let i = 0
-  const n = json.length
-  while (i < n) {
-    const c = json[i]
-    if (c === " " || c === "\n" || c === "\r" || c === "\t") {
-      i++
-      continue
-    }
-    if (c === "{" || c === "}" || c === "[" || c === "]" || c === ":" || c === ",") {
-      tokens.push({ type: c as any, raw: c } as Token)
-      i++
-      continue
-    }
-    if (c === '"') {
-      const start = i
-      i++ // skip opening
-      while (i < n) {
-        if (json[i] === "\\") {
-          // escape: skip next char
-          // handle case where \ is last char -> will go beyond n, but then raw will be invalid and JSON.parse will fail
-          i += 2
-          continue
-        }
-        if (json[i] === '"') {
-          i++ // include closing
-          break
-        }
-        i++
-      }
-      const raw = json.slice(start, i)
-      // Validate and decode via JSON.parse; if invalid, throw
-      let decoded: string
-      try {
-        decoded = JSON.parse(raw)
-      } catch {
-        throw new Error("Invalid string token")
-      }
-      tokens.push({ type: "string", value: decoded, raw })
-      continue
-    }
-    if (c === "t") {
-      if (json.startsWith("true", i)) {
-        tokens.push({ type: "literal", value: "true", raw: "true" })
-        i += 4
-        continue
-      }
-      throw new Error("Invalid literal")
-    }
-    if (c === "f") {
-      if (json.startsWith("false", i)) {
-        tokens.push({ type: "literal", value: "false", raw: "false" })
-        i += 5
-        continue
-      }
-      throw new Error("Invalid literal")
-    }
-    if (c === "n") {
-      if (json.startsWith("null", i)) {
-        tokens.push({ type: "literal", value: "null", raw: "null" })
-        i += 4
-        continue
-      }
-      throw new Error("Invalid literal")
-    }
-    if (c === "-" || (c >= "0" && c <= "9")) {
-      const start = i
-      i++
-      while (i < n && /[0-9eE.\+\-]/.test(json[i])) i++
-      const raw = json.slice(start, i)
-      tokens.push({ type: "number", value: raw, raw })
-      continue
-    }
-    throw new Error(`Unexpected char ${c} at ${i}`)
-  }
-  return tokens
-}
-
-function hasDuplicateKeys(json: string): boolean {
-  const tokens = tokenize(json)
-  type ObjectFrame = { type: "object"; keys: Set<string>; expect: "keyOrEnd" | "value" | "commaOrEnd" | "key" }
-  type ArrayFrame = { type: "array"; expect: "valueOrEnd" | "value" | "commaOrEnd" }
-  type Frame = ObjectFrame | ArrayFrame
-  const stack: Frame[] = []
-  let i = 0
-  while (i < tokens.length) {
-    const tok = tokens[i] as Token
-    if (stack.length === 0) {
-      if (tok.type === "{") {
-        stack.push({ type: "object", keys: new Set(), expect: "keyOrEnd" })
-        i++
-        continue
-      }
-      if (tok.type === "[") {
-        stack.push({ type: "array", expect: "valueOrEnd" })
-        i++
-        continue
-      }
-      if (tok.type === "string" || tok.type === "number" || tok.type === "literal") {
-        i++
-        continue
-      }
-      // stray token like } ] , : at top-level -> invalid, but not duplicate
-      i++
-      continue
-    }
-    const top = stack[stack.length - 1]!
-    if (top.type === "object") {
-      if (top.expect === "keyOrEnd") {
-        if (tok.type === "}") {
-          stack.pop()
-          if (stack.length > 0) {
-            const parent = stack[stack.length - 1]!
-            if (parent.type === "object" && parent.expect === "value") parent.expect = "commaOrEnd"
-            else if (parent.type === "array" && (parent.expect === "value" || parent.expect === "valueOrEnd"))
-              parent.expect = "commaOrEnd"
-          }
-          i++
-          continue
-        } else if (tok.type === "string") {
-          const next = tokens[i + 1] as Token | undefined
-          if (next && next.type === ":") {
-            const key = (tok as { type: "string"; value: string }).value
-            if (top.keys.has(key)) return true
-            top.keys.add(key)
-            top.expect = "value"
-            i += 2
-            continue
-          } else {
-            i++
-            continue
-          }
-        } else {
-          i++
-          continue
-        }
-      } else if (top.expect === "value") {
-        if (tok.type === "{") {
-          stack.push({ type: "object", keys: new Set(), expect: "keyOrEnd" })
-          i++
-          continue
-        } else if (tok.type === "[") {
-          stack.push({ type: "array", expect: "valueOrEnd" })
-          i++
-          continue
-        } else if (tok.type === "string" || tok.type === "number" || tok.type === "literal") {
-          top.expect = "commaOrEnd"
-          i++
-          continue
-        } else {
-          i++
-          continue
-        }
-      } else if (top.expect === "commaOrEnd") {
-        if (tok.type === ",") {
-          top.expect = "key"
-          i++
-          continue
-        } else if (tok.type === "}") {
-          stack.pop()
-          if (stack.length > 0) {
-            const parent = stack[stack.length - 1]!
-            if (parent.type === "object" && parent.expect === "value") parent.expect = "commaOrEnd"
-            else if (parent.type === "array" && (parent.expect === "value" || parent.expect === "valueOrEnd"))
-              parent.expect = "commaOrEnd"
-          }
-          i++
-          continue
-        } else {
-          i++
-          continue
-        }
-      } else if (top.expect === "key") {
-        if (tok.type === "string") {
-          const next = tokens[i + 1] as Token | undefined
-          if (next && next.type === ":") {
-            const key = (tok as { type: "string"; value: string }).value
-            if (top.keys.has(key)) return true
-            top.keys.add(key)
-            top.expect = "value"
-            i += 2
-            continue
-          } else {
-            i++
-            continue
-          }
-        } else {
-          i++
-          continue
-        }
-      } else {
-        i++
-        continue
-      }
-    } else {
-      // array
-      if (top.expect === "valueOrEnd") {
-        if (tok.type === "]") {
-          stack.pop()
-          if (stack.length > 0) {
-            const parent = stack[stack.length - 1]!
-            if (parent.type === "object" && parent.expect === "value") parent.expect = "commaOrEnd"
-            else if (parent.type === "array" && (parent.expect === "value" || parent.expect === "valueOrEnd"))
-              parent.expect = "commaOrEnd"
-          }
-          i++
-          continue
-        } else if (tok.type === "{") {
-          stack.push({ type: "object", keys: new Set(), expect: "keyOrEnd" })
-          i++
-          continue
-        } else if (tok.type === "[") {
-          stack.push({ type: "array", expect: "valueOrEnd" })
-          i++
-          continue
-        } else if (tok.type === "string" || tok.type === "number" || tok.type === "literal") {
-          top.expect = "commaOrEnd"
-          i++
-          continue
-        } else {
-          i++
-          continue
-        }
-      } else if (top.expect === "value") {
-        if (tok.type === "{") {
-          stack.push({ type: "object", keys: new Set(), expect: "keyOrEnd" })
-          i++
-          continue
-        } else if (tok.type === "[") {
-          stack.push({ type: "array", expect: "valueOrEnd" })
-          i++
-          continue
-        } else if (tok.type === "string" || tok.type === "number" || tok.type === "literal") {
-          top.expect = "commaOrEnd"
-          i++
-          continue
-        } else {
-          i++
-          continue
-        }
-      } else if (top.expect === "commaOrEnd") {
-        if (tok.type === ",") {
-          top.expect = "value"
-          i++
-          continue
-        } else if (tok.type === "]") {
-          stack.pop()
-          if (stack.length > 0) {
-            const parent = stack[stack.length - 1]!
-            if (parent.type === "object" && parent.expect === "value") parent.expect = "commaOrEnd"
-            else if (parent.type === "array" && (parent.expect === "value" || parent.expect === "valueOrEnd"))
-              parent.expect = "commaOrEnd"
-          }
-          i++
-          continue
-        } else {
-          i++
-          continue
-        }
-      } else {
-        i++
-        continue
-      }
-    }
-  }
-  return false
 }
 
 // ---- validation helpers ----
@@ -326,21 +45,21 @@ function isValidAggregateStructure(obj: unknown): obj is Aggregate {
 }
 
 function isValidAggregateInvariants(agg: Aggregate): boolean {
-  // truncated <= calls
+  // calls == observedCalls; truncated <= observed
   if (agg.truncatedCalls > agg.calls) return false
-  // excluded + error <= calls (so derived measured >=0)
+  // excluded + error <= observed (so derived measuredCalls >=0)
   // Use safe addition check: if sum would overflow, it's invalid
   const sumExcludedError = agg.excludedOversizeCalls + agg.tokenizerErrorCalls
   if (!Number.isSafeInteger(sumExcludedError)) return false
   if (sumExcludedError > agg.calls) return false
-  const derivedMeasured = agg.calls - sumExcludedError
+  const derivedMeasured = agg.calls - sumExcludedError // = measuredCalls
   if (!Number.isSafeInteger(derivedMeasured) || derivedMeasured < 0) return false
   if (agg.passThroughCalls > derivedMeasured) return false
-  // if derivedMeasured ===0 then beforeTokens and afterTokens must be 0
+  // if derivedMeasured (measuredCalls) ===0 then beforeTokens and afterTokens must be 0
   if (derivedMeasured === 0) {
     if (agg.beforeTokens !== 0 || agg.afterTokens !== 0) return false
   }
-  // if calls ===0 then all must be zero (covers above but also truncated etc)
+  // if observedCalls (calls) ===0 then all must be zero (covers above but also truncated etc)
   if (agg.calls === 0) {
     if (
       agg.beforeTokens !== 0 ||

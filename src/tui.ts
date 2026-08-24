@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { TuiPluginModule } from "@opencode-ai/plugin/tui"
 import { pluginId } from "./plugin-id"
 

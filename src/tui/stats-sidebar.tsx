@@ -1,7 +1,19 @@
-// @ts-nocheck
 /** @jsxImportSource @opentui/solid */
 import type { TuiPluginApi, TuiSlotPlugin } from "@opencode-ai/plugin/tui"
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment - solid-js stub has no types in CI
+// @ts-ignore: solid-js types are provided by runtime, ignore missing declaration for test stub
 import { createEffect, createMemo, createSignal, on, onCleanup } from "solid-js"
+
+// Targeted JSX fix for @opentui/solid without file-wide nocheck
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      box: any
+      text: any
+      b: any
+    }
+  }
+}
 import { formatTokens, formatCompression, formatHeader, formatFooter } from "./stats-format"
 import { deriveSaved, deriveCompressionPercent, emptyAggregate, type Aggregate } from "../stats/contract"
 import { createTuiPoller, readTuiState, clearReaderState, type TuiReadResult, type TuiStatus } from "./stats-reader"
@@ -84,13 +96,7 @@ export function getExpandedLines(state: {
   const sessionMeasured = hasMeasured(sessionAgg)
   const projectMeasured = hasMeasured(projectAgg)
 
-  // Decide whether to render Session section at all when sessionAgg null and project measured
   // Per spec "If Session has no bucket/observations and Project has measurements, Project rows follow immediately."
-  // We interpret as: still render Session header with No measured calls yet, then Project header immediately.
-  // But to satisfy both interpretations, we will render Session header when bucket exists or when project does not have measured
-  const shouldRenderSession = sessionHasBucket || !projectMeasured || !hasMeasured(projectAgg)
-  // Actually, if sessionAgg is null and projectMeasured true, we could skip Session to make Project follow immediately after header.
-  // For test "expanded session empty with project data" we expect Project data present, Session may be omitted or show empty.
   // We'll include Session when sessionAgg is not null; when null we skip Session header to let Project follow immediately.
   if (sessionAgg !== null) {
     lines.push("Session")
@@ -187,7 +193,6 @@ export function StatsSidebarContent(props: { api: TuiPluginApi; sessionId: () =>
       return
     }
     // close old watcher, clear poll and debounce timers, invalidate inflight reads
-    generation++
     if (pollDispose) {
       pollDispose()
       pollDispose = null
@@ -260,6 +265,7 @@ export function StatsSidebarContent(props: { api: TuiPluginApi; sessionId: () =>
     return getExpandedLines({ status: st.status, sessionAgg: st.sessionAgg, projectAgg: st.projectAgg })
   })
 
+  // @ts-ignore
   return (
     <box flexDirection="column" width="100%">
       <box flexDirection="row" justifyContent="space-between" onMouseDown={toggleCollapsed}>
@@ -274,7 +280,7 @@ export function StatsSidebarContent(props: { api: TuiPluginApi; sessionId: () =>
         </box>
       ) : (
         <box flexDirection="column">
-          {expandedLines().map((line) => (
+          {expandedLines().map((line: string) => (
             <text>{line}</text>
           ))}
         </box>

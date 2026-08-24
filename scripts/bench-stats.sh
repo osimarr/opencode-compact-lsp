@@ -57,6 +57,19 @@ if grep -R "import.*gpt-tokenizer\|from.*gpt-tokenizer\|require.*gpt-tokenizer" 
 fi
 echo "TUI exclusion pass"
 
+echo "== bench-stats: TUI built bundle check =="
+# Ensure dist/cli.js does not bundle TUI (fatal) — precise guard avoids metric false positive
+if grep -q "stats-sidebar\|stats-reader" dist/cli.js 2>/dev/null; then
+  echo "FAIL: dist/cli.js bundles TUI reader/sidebar (forbidden)" >&2
+  exit 1
+fi
+# Also ensure no server deps leak into TUI via built artifact (check src/tui for encoding path)
+if grep -R "gpt-tokenizer/encoding" src/tui --include="*.ts" --include="*.tsx" 2>/dev/null; then
+  echo "FAIL: TUI imports gpt-tokenizer encoding (forbidden)" >&2
+  exit 1
+fi
+echo "TUI built bundle check ok"
+
 echo "== bench-stats: package budgets =="
 bun run build >/dev/null 2>&1 || true
 # tarball size

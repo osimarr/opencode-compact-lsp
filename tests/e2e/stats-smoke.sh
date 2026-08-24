@@ -55,13 +55,24 @@ bun run build >/dev/null
 echo "build ok"
 
 echo "== stats-smoke: TUI bundle check (built dist) =="
-# Ensure dist/cli.js does not contain TUI sidebar import? Actually CLI may contain server code, but TUI module is separate.
-# We check that src/tui/* does not get bundled into dist/cli.js via dependency graph:
+# Ensure dist/cli.js does not contain TUI sidebar import (fatal)
 if grep -q "stats-sidebar\|stats-reader" dist/cli.js 2>/dev/null; then
-  echo "dist/cli.js should not bundle TUI reader/sidebar" >&2
-  # not fatal if CLI imports TUI? but check
+  echo "FAIL: dist/cli.js bundles TUI reader/sidebar (forbidden)" >&2
+  exit 1
 fi
-# Check that TUI import graph is clean via grep on built tui bundle if exists (dist is only cli, tui is src/tui.ts exported as ES module, not bundled)
+# Ensure TUI import graph does not pull server deps (precise guards avoid metric false positive)
+if grep -R "from.*stats/worker\|from.*stats/recorder\|from.*stats/tokenizer" src/tui --include="*.ts" --include="*.tsx" 2>/dev/null; then
+  echo "FAIL: TUI imports worker/recorder/tokenizer (forbidden)" >&2
+  exit 1
+fi
+if grep -R "gpt-tokenizer/encoding" src/tui --include="*.ts" --include="*.tsx" 2>/dev/null; then
+  echo "FAIL: TUI imports gpt-tokenizer (forbidden)" >&2
+  exit 1
+fi
+if grep -R "proper-lockfile" src/tui --include="*.ts" --include="*.tsx" 2>/dev/null; then
+  echo "FAIL: TUI imports proper-lockfile (forbidden)" >&2
+  exit 1
+fi
 echo "bundle check ok"
 
 echo "== stats-smoke: ensure TUI stubs for runtime import =="

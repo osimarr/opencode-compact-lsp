@@ -4,9 +4,8 @@ import { applyLspOutput } from "./format"
 import { createRecorder as defaultCreateRecorder } from "./stats/recorder"
 import type { Recorder } from "./stats/recorder"
 import * as path from "node:path"
-import * as crypto from "node:crypto"
-import * as fs from "node:fs/promises"
 import { canonicalProjectIdentity, deriveProjectKey, resolveStateRoot } from "./stats/identity"
+import { ensureIdentityKey } from "./stats/identity-store"
 
 let testFactory: typeof defaultCreateRecorder | null = null
 let testRecorder: Recorder | null = null
@@ -35,7 +34,7 @@ export default (async (_input, raw) => {
     const hasDirectory = typeof (_input as any)?.directory === "string" && (_input as any).directory.length > 0
     const shouldAttempt = hasDirectory || testFactory !== null
     if (shouldAttempt) {
-      let ctx: { stateRoot: string; projectKey: string; projectDir: string } | null = null
+      let ctx: { stateRoot: string; projectKey: string; projectDir: string; identityKey: Buffer | null } | null = null
       try {
         if (hasDirectory) {
           const directory = (_input as any).directory as string
@@ -52,24 +51,23 @@ export default (async (_input, raw) => {
           } catch {
             canonical = directory
           }
-          let key32: Buffer
-          try {
-            const data = await fs.readFile(path.join(stateRoot, "identity-v1"))
-            if (data.length === 32) key32 = Buffer.from(data)
-            else throw new Error("invalid identity length")
-          } catch {
-            // ephemeral for Task 5; Task 6 will persist with locking
-            key32 = crypto.randomBytes(32)
+          const key32 = await ensureIdentityKey(stateRoot)
+          if (!key32) {
+            // orphaned or malformed identity → stats unavailable, do not create recorder
+            ctx = null
+          } else {
+            const projectKey = deriveProjectKey(key32, canonical)
+            const projectDir = path.join(stateRoot, "projects", projectKey)
+            ctx = { stateRoot, projectKey, projectDir, identityKey: key32 }
           }
-          const projectKey = deriveProjectKey(key32, canonical)
-          const projectDir = path.join(stateRoot, "projects", projectKey)
-          ctx = { stateRoot, projectKey, projectDir }
         } else {
           // test-only dummy ctx when factory is injected but no directory (e.g., {} as input)
           const stateRoot = path.join("/tmp", "opencode-compact-lsp-test")
           const projectKey = "a".repeat(64)
           const projectDir = path.join(stateRoot, "projects", projectKey)
-          ctx = { stateRoot, projectKey, projectDir }
+          // synthetic 32-byte key for test (do not log)
+          const identityKey = Buffer.alloc(32, 0x61)
+          ctx = { stateRoot, projectKey, projectDir, identityKey }
         }
       } catch {
         ctx = null

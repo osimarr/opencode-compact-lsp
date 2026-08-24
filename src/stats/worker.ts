@@ -12,6 +12,7 @@ import * as crypto from "node:crypto"
 import { STATS_SCHEMA_VERSION, STATS_METRIC, emptyAggregate, type Aggregate } from "./contract"
 import { validateSnapshot, pruneSessions, type ProjectSnapshot } from "./snapshot"
 import { getTokenizer, countTokens } from "./tokenizer"
+import { deriveSessionKey } from "./identity"
 
 // ---- constants per ADR ----
 export const MAX_JOBS = 16
@@ -56,6 +57,7 @@ export type WorkerCtx = {
   stateRoot: string
   projectKey: string
   projectDir: string
+  identityKey?: Buffer | null
 }
 
 // ---- capability helpers ----
@@ -201,6 +203,8 @@ async function withProjectLock<T>(projectDir: string, fn: (compromisedRef: { com
     await ensureDir(snapshotsDir(projectDir), 0o700)
 
     let compromised = false
+    // 500ms external deadline is measured from attempt start, not after lock acquisition.
+    const deadline = Date.now() + 500
     const release = await (lockfile as any).lock(projectDir, {
       ...LOCK_OPTS,
       onCompromised: () => {
@@ -215,10 +219,6 @@ async function withProjectLock<T>(projectDir: string, fn: (compromisedRef: { com
         compromised = v
       },
     }
-    // Enforce external 500ms deadline
-    const deadline = Date.now() + 500
-    // The library already has retries, but we enforce deadline by racing
-    // For simplicity, we already acquired; just check deadline not exceeded before fn
     if (Date.now() > deadline) {
       try {
         await release()
@@ -611,6 +611,10 @@ export function createWorker(ctx: WorkerCtx) {
   }
 
   async function handleJob(job: Job): Promise<void> {
+    // If identity unavailable, do not publish SHA256-derived bucket (per finding)
+    if (!ctx.identityKey || ctx.identityKey.length !== 32) {
+      return
+    }
     // Tokenize if measure
     let beforeTokens: number | null = null
     let afterTokens: number | null = null
@@ -660,22 +664,11 @@ export function createWorker(ctx: WorkerCtx) {
               sessions: {},
             } as unknown as ProjectSnapshot)
 
-          // Derive session key via identity? For worker we need session key derived from identity.
-          // However worker ctx does not contain identity key; we have projectKey but need to derive sessionKey from identity.
-          // For Task 4, we use job.sessionId directly as opaque? But spec says session keys are HMAC hex.
-          // We will derive sessionKey by HMAC if we have identity key, otherwise fallback to hash of sessionId for test.
-          // To keep worker functional without identity file, we use simple derivation for now: use job.sessionId as key if it looks hex, otherwise hash it
-          // In real store, we will derive via identity.ts deriveSessionKey.
-          // For Task 4, simplify: sessionKey = job.sessionId if 64 hex else hex of sessionId's sha256 prefix?
-          // Use a deterministic fallback: if sessionId is 64 hex, use it, else hash with projectKey
-          let sessionKey: string
-          if (/^[0-9a-f]{64}$/.test(job.sessionId)) {
-            sessionKey = job.sessionId
-          } else {
-            // fallback deterministic: create 64 hex from sha256(projectKey + sessionId)
-            const h = crypto.createHash("sha256").update(projectKeyFromCtx(ctx) + "\0" + job.sessionId).digest("hex")
-            sessionKey = h
+          // Derive session key via HMAC with identity key (per ADR, no SHA256 fallback)
+          if (!ctx.identityKey || ctx.identityKey.length !== 32) {
+            throw new Error("identity unavailable")
           }
+          const sessionKey = deriveSessionKey(ctx.identityKey, ctx.projectKey, job.sessionId)
 
           const nowMs = Date.now()
           if (!Number.isSafeInteger(nowMs) || nowMs < 0) throw new Error("invalid nowMs")
@@ -776,7 +769,7 @@ export function createWorker(ctx: WorkerCtx) {
           // dropped collision, not retry
           return
         }
-        if (e?.message === "corrupt snapshot" || e?.message === "revision mismatch" || e?.message === "overflow" || e?.message === "compromised" || e?.message === "compromised before publish" || e?.message === "capability unavailable" || e?.message === "capability not available" || e?.message === "capability expired" || e?.message === "capability missing") {
+        if (e?.message === "corrupt snapshot" || e?.message === "revision mismatch" || e?.message === "overflow" || e?.message === "compromised" || e?.message === "compromised before publish" || e?.message === "capability unavailable" || e?.message === "capability not available" || e?.message === "capability expired" || e?.message === "capability missing" || e?.message === "identity unavailable") {
           return
         }
         if (code === "ENOSYS" || code === "ENOTSUP" || code === "EOPNOTSUPP" || code === "EXDEV" || code === "EPERM" || code === "EACCES") {
