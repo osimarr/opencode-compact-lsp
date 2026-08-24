@@ -32,7 +32,10 @@ type LspRange = { start: LspPosition; end: LspPosition }
 
 export function compactValue(value: unknown): unknown {
   if (value == null) return null
-  if (Array.isArray(value)) return dedup(value.map(compactValue).filter((item) => item != null))
+  if (Array.isArray(value)) {
+    const nested = nestSymbolInformation(value)
+    return dedup(nested.map(compactValue).filter((item: unknown) => item != null))
+  }
   if (typeof value !== "object") return value
 
   const obj = value as Record<string, unknown>
@@ -129,6 +132,97 @@ function compactSymbol(obj: Record<string, unknown>): Record<string, unknown> | 
     if (Array.isArray(children) && children.length > 0) out.children = children
   }
   return out
+}
+
+type SymbolNode = Record<string, unknown> & { children: unknown[] }
+
+function isFlatSymbolInformation(item: unknown): item is Record<string, unknown> {
+  if (item == null || typeof item !== "object" || Array.isArray(item)) return false
+  const obj = item as Record<string, unknown>
+  if (!("name" in obj) || !("kind" in obj)) return false
+  if (Array.isArray(obj.children) && obj.children.length > 0) return false
+  return asLocation(obj.location) != null
+}
+
+function nestSymbolInformation(items: unknown[]): unknown[] {
+  if (items.length === 0 || !items.every(isFlatSymbolInformation)) return items
+  if (!items.some((item) => typeof item.containerName === "string" && item.containerName.length > 0)) return items
+
+  const nodes: SymbolNode[] = items.map((item) => ({ ...item, children: [] }))
+  const roots: SymbolNode[] = []
+  for (const node of nodes) {
+    const parent = findContainer(nodes, node)
+    if (parent && !isDescendant(node, parent)) parent.children.push(node)
+    else roots.push(node)
+  }
+  return roots
+}
+
+function symbolUri(obj: Record<string, unknown>): string | undefined {
+  return asLocation(obj.location)?.uri
+}
+
+function symbolRange(obj: Record<string, unknown>): LspRange | undefined {
+  return asLocation(obj.location)?.range
+}
+
+function rangeContains(outer: LspRange, inner: LspRange): boolean {
+  const startsBefore =
+    outer.start.line < inner.start.line
+    || (outer.start.line === inner.start.line && outer.start.character <= inner.start.character)
+  const endsAfter =
+    outer.end.line > inner.end.line
+    || (outer.end.line === inner.end.line && outer.end.character >= inner.end.character)
+  return startsBefore && endsAfter
+}
+
+function rangeSize(range: LspRange): number {
+  return (range.end.line - range.start.line) * 1e6 + (range.end.character - range.start.character)
+}
+
+function findContainer(nodes: SymbolNode[], node: SymbolNode): SymbolNode | undefined {
+  const name = node.containerName
+  if (typeof name !== "string" || name.length === 0) return undefined
+  const uri = symbolUri(node)
+  const range = symbolRange(node)
+  const candidates = nodes.filter((parent) => parent !== node && parent.name === name && symbolUri(parent) === uri)
+  if (candidates.length === 0) return undefined
+  if (candidates.length === 1) return candidates[0]
+  if (!range) return candidates[0]
+  const containing = candidates.filter((parent) => {
+    const parentRange = symbolRange(parent)
+    return parentRange ? rangeContains(parentRange, range) : false
+  })
+  if (containing.length === 0) {
+    const preceding = candidates.filter((parent) => {
+      const parentRange = symbolRange(parent)
+      if (!parentRange) return false
+      return (
+        parentRange.start.line < range.start.line
+        || (parentRange.start.line === range.start.line && parentRange.start.character <= range.start.character)
+      )
+    })
+    return preceding.at(-1) ?? candidates[0]
+  }
+  return containing.reduce((best, parent) => {
+    const bestRange = symbolRange(best)
+    const parentRange = symbolRange(parent)
+    if (!bestRange || !parentRange) return best
+    return rangeSize(parentRange) < rangeSize(bestRange) ? parent : best
+  })
+}
+
+function isDescendant(ancestor: SymbolNode, node: unknown): boolean {
+  const stack = [...ancestor.children]
+  while (stack.length) {
+    const current = stack.pop()
+    if (current === node) return true
+    if (current != null && typeof current === "object" && "children" in current) {
+      const children = (current as { children: unknown }).children
+      if (Array.isArray(children)) stack.push(...children)
+    }
+  }
+  return false
 }
 
 function asLocation(value: unknown): { uri: string; range: LspRange } | undefined {

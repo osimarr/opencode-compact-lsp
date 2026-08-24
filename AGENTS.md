@@ -40,6 +40,7 @@ bash tests/e2e/smoke.sh
 ```
 
 Smoke uses an isolated HOME and only checks plugin load (does not invoke `lsp`).
+`bun test tests/qa` runs against a captured tsserver `documentSymbol` payload (flat `SymbolInformation[]`, OpenCode does not advertise hierarchical symbols). Flattened outlines fail that gate.
 
 Builtin `lsp` is behind `OPENCODE_EXPERIMENTAL_LSP_TOOL`. Without it the hook is a silent no-op.
 
@@ -53,6 +54,7 @@ Builtin `lsp` is behind `OPENCODE_EXPERIMENTAL_LSP_TOOL`. Without it the hook is
 | `src/outline.ts` | Symbol DTO → indented outline |
 | `src/format.ts` | `applyLspOutput` flags + stringify / outline |
 | `src/cli.ts` | `install` / `doctor` |
+| `tests/qa/` | Captured tsserver documentSymbol outline gate |
 
 Omit `compact` / `minified` → `true`. Both false is identity.
 

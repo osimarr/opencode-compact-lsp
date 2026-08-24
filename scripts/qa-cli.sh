@@ -5,6 +5,8 @@ cd "$ROOT"
 export CI=true
 PLUGIN=opencode-compact-lsp
 
+bun test tests/qa/document-symbol-outline.test.ts
+
 bun run build
 shebang="$(head -n1 dist/cli.js)"
 if [[ "$shebang" != "#!/usr/bin/env node" ]]; then
@@ -29,6 +31,7 @@ assert_pack "package/src/tui.ts"
 assert_pack "package/src/plugin-id.ts"
 assert_pack "package/src/compact.ts"
 assert_pack "package/src/format.ts"
+assert_pack "package/src/outline.ts"
 assert_pack "package/src/options.ts"
 printf '%s\n' "${files[@]}" | grep -q '\.env' && {
   echo "pack must not include .env" >&2

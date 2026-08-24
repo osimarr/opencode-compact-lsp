@@ -1,0 +1,1617 @@
+[
+  {
+    "name": "asLocation",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 227,
+          "character": 0
+        },
+        "end": {
+          "line": 233,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "loc",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 229,
+          "character": 8
+        },
+        "end": {
+          "line": 229,
+          "character": 46
+        }
+      }
+    },
+    "containerName": "asLocation"
+  },
+  {
+    "name": "range",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 230,
+          "character": 8
+        },
+        "end": {
+          "line": 230,
+          "character": 34
+        }
+      }
+    },
+    "containerName": "asLocation"
+  },
+  {
+    "name": "range",
+    "kind": 7,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 232,
+          "character": 25
+        },
+        "end": {
+          "line": 232,
+          "character": 30
+        }
+      }
+    },
+    "containerName": "asLocation"
+  },
+  {
+    "name": "uri",
+    "kind": 7,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 232,
+          "character": 11
+        },
+        "end": {
+          "line": 232,
+          "character": 23
+        }
+      }
+    },
+    "containerName": "asLocation"
+  },
+  {
+    "name": "asRange",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 87,
+          "character": 0
+        },
+        "end": {
+          "line": 92,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "end",
+    "kind": 7,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 91,
+          "character": 31
+        },
+        "end": {
+          "line": 91,
+          "character": 45
+        }
+      }
+    },
+    "containerName": "asRange"
+  },
+  {
+    "name": "range",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 89,
+          "character": 8
+        },
+        "end": {
+          "line": 89,
+          "character": 48
+        }
+      }
+    },
+    "containerName": "asRange"
+  },
+  {
+    "name": "start",
+    "kind": 7,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 91,
+          "character": 11
+        },
+        "end": {
+          "line": 91,
+          "character": 29
+        }
+      }
+    },
+    "containerName": "asRange"
+  },
+  {
+    "name": "compactLocation",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 94,
+          "character": 0
+        },
+        "end": {
+          "line": 102,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "column",
+    "kind": 7,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 98,
+          "character": 4
+        },
+        "end": {
+          "line": 98,
+          "character": 37
+        }
+      }
+    },
+    "containerName": "compactLocation"
+  },
+  {
+    "name": "end_column",
+    "kind": 7,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 100,
+          "character": 4
+        },
+        "end": {
+          "line": 100,
+          "character": 39
+        }
+      }
+    },
+    "containerName": "compactLocation"
+  },
+  {
+    "name": "end_line",
+    "kind": 7,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 99,
+          "character": 4
+        },
+        "end": {
+          "line": 99,
+          "character": 32
+        }
+      }
+    },
+    "containerName": "compactLocation"
+  },
+  {
+    "name": "line",
+    "kind": 7,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 97,
+          "character": 4
+        },
+        "end": {
+          "line": 97,
+          "character": 30
+        }
+      }
+    },
+    "containerName": "compactLocation"
+  },
+  {
+    "name": "path",
+    "kind": 7,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 96,
+          "character": 4
+        },
+        "end": {
+          "line": 96,
+          "character": 23
+        }
+      }
+    },
+    "containerName": "compactLocation"
+  },
+  {
+    "name": "compactSymbol",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 114,
+          "character": 0
+        },
+        "end": {
+          "line": 134,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "children",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 130,
+          "character": 10
+        },
+        "end": {
+          "line": 130,
+          "character": 47
+        }
+      }
+    },
+    "containerName": "compactSymbol"
+  },
+  {
+    "name": "location",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 116,
+          "character": 8
+        },
+        "end": {
+          "line": 116,
+          "character": 43
+        }
+      }
+    },
+    "containerName": "compactSymbol"
+  },
+  {
+    "name": "out",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 120,
+          "character": 8
+        },
+        "end": {
+          "line": 123,
+          "character": 3
+        }
+      }
+    },
+    "containerName": "compactSymbol"
+  },
+  {
+    "name": "kind",
+    "kind": 7,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 122,
+          "character": 4
+        },
+        "end": {
+          "line": 122,
+          "character": 28
+        }
+      }
+    },
+    "containerName": "out"
+  },
+  {
+    "name": "name",
+    "kind": 7,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 121,
+          "character": 4
+        },
+        "end": {
+          "line": 121,
+          "character": 18
+        }
+      }
+    },
+    "containerName": "out"
+  },
+  {
+    "name": "range",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 117,
+          "character": 8
+        },
+        "end": {
+          "line": 117,
+          "character": 84
+        }
+      }
+    },
+    "containerName": "compactSymbol"
+  },
+  {
+    "name": "uri",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 124,
+          "character": 8
+        },
+        "end": {
+          "line": 124,
+          "character": 82
+        }
+      }
+    },
+    "containerName": "compactSymbol"
+  },
+  {
+    "name": "compactValue",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 32,
+          "character": 0
+        },
+        "end": {
+          "line": 63,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "compacted",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 59,
+          "character": 10
+        },
+        "end": {
+          "line": 59,
+          "character": 42
+        }
+      }
+    },
+    "containerName": "compactValue"
+  },
+  {
+    "name": "contents",
+    "kind": 7,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 45,
+          "character": 34
+        },
+        "end": {
+          "line": 45,
+          "character": 67
+        }
+      }
+    },
+    "containerName": "compactValue"
+  },
+  {
+    "name": "filter() callback",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 36,
+          "character": 49
+        },
+        "end": {
+          "line": 36,
+          "character": 80
+        }
+      }
+    },
+    "containerName": "compactValue"
+  },
+  {
+    "name": "key",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 58,
+          "character": 14
+        },
+        "end": {
+          "line": 58,
+          "character": 17
+        }
+      }
+    },
+    "containerName": "compactValue"
+  },
+  {
+    "name": "mapped",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 57,
+          "character": 8
+        },
+        "end": {
+          "line": 57,
+          "character": 44
+        }
+      }
+    },
+    "containerName": "compactValue"
+  },
+  {
+    "name": "nested",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 58,
+          "character": 19
+        },
+        "end": {
+          "line": 58,
+          "character": 25
+        }
+      }
+    },
+    "containerName": "compactValue"
+  },
+  {
+    "name": "nested",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 35,
+          "character": 10
+        },
+        "end": {
+          "line": 35,
+          "character": 47
+        }
+      }
+    },
+    "containerName": "compactValue"
+  },
+  {
+    "name": "obj",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 40,
+          "character": 8
+        },
+        "end": {
+          "line": 40,
+          "character": 46
+        }
+      }
+    },
+    "containerName": "compactValue"
+  },
+  {
+    "name": "range",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 42,
+          "character": 10
+        },
+        "end": {
+          "line": 42,
+          "character": 79
+        }
+      }
+    },
+    "containerName": "compactValue"
+  },
+  {
+    "name": "range",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 51,
+          "character": 10
+        },
+        "end": {
+          "line": 51,
+          "character": 36
+        }
+      }
+    },
+    "containerName": "compactValue"
+  },
+  {
+    "name": "symbol",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 47,
+          "character": 8
+        },
+        "end": {
+          "line": 47,
+          "character": 35
+        }
+      }
+    },
+    "containerName": "compactValue"
+  },
+  {
+    "name": "dedup",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 235,
+          "character": 0
+        },
+        "end": {
+          "line": 245,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "item",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 238,
+          "character": 13
+        },
+        "end": {
+          "line": 238,
+          "character": 17
+        }
+      }
+    },
+    "containerName": "dedup"
+  },
+  {
+    "name": "key",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 239,
+          "character": 10
+        },
+        "end": {
+          "line": 239,
+          "character": 30
+        }
+      }
+    },
+    "containerName": "dedup"
+  },
+  {
+    "name": "out",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 237,
+          "character": 8
+        },
+        "end": {
+          "line": 237,
+          "character": 27
+        }
+      }
+    },
+    "containerName": "dedup"
+  },
+  {
+    "name": "seen",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 236,
+          "character": 8
+        },
+        "end": {
+          "line": 236,
+          "character": 32
+        }
+      }
+    },
+    "containerName": "dedup"
+  },
+  {
+    "name": "dedupKey",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 247,
+          "character": 0
+        },
+        "end": {
+          "line": 255,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "obj",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 249,
+          "character": 10
+        },
+        "end": {
+          "line": 249,
+          "character": 47
+        }
+      }
+    },
+    "containerName": "dedupKey"
+  },
+  {
+    "name": "filePath",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 72,
+          "character": 0
+        },
+        "end": {
+          "line": 79,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "raw",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 73,
+          "character": 8
+        },
+        "end": {
+          "line": 73,
+          "character": 75
+        }
+      }
+    },
+    "containerName": "filePath"
+  },
+  {
+    "name": "findContainer",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 182,
+          "character": 0
+        },
+        "end": {
+          "line": 212,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "candidates",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 187,
+          "character": 8
+        },
+        "end": {
+          "line": 187,
+          "character": 115
+        }
+      }
+    },
+    "containerName": "findContainer"
+  },
+  {
+    "name": "nodes.filter() callback",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 187,
+          "character": 34
+        },
+        "end": {
+          "line": 187,
+          "character": 114
+        }
+      }
+    },
+    "containerName": "candidates"
+  },
+  {
+    "name": "containing",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 191,
+          "character": 8
+        },
+        "end": {
+          "line": 194,
+          "character": 4
+        }
+      }
+    },
+    "containerName": "findContainer"
+  },
+  {
+    "name": "candidates.filter() callback",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 191,
+          "character": 39
+        },
+        "end": {
+          "line": 194,
+          "character": 3
+        }
+      }
+    },
+    "containerName": "containing"
+  },
+  {
+    "name": "parentRange",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 192,
+          "character": 10
+        },
+        "end": {
+          "line": 192,
+          "character": 43
+        }
+      }
+    },
+    "containerName": "candidates.filter() callback"
+  },
+  {
+    "name": "containing.reduce() callback",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 206,
+          "character": 27
+        },
+        "end": {
+          "line": 211,
+          "character": 3
+        }
+      }
+    },
+    "containerName": "findContainer"
+  },
+  {
+    "name": "bestRange",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 207,
+          "character": 10
+        },
+        "end": {
+          "line": 207,
+          "character": 39
+        }
+      }
+    },
+    "containerName": "containing.reduce() callback"
+  },
+  {
+    "name": "parentRange",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 208,
+          "character": 10
+        },
+        "end": {
+          "line": 208,
+          "character": 43
+        }
+      }
+    },
+    "containerName": "containing.reduce() callback"
+  },
+  {
+    "name": "name",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 183,
+          "character": 8
+        },
+        "end": {
+          "line": 183,
+          "character": 33
+        }
+      }
+    },
+    "containerName": "findContainer"
+  },
+  {
+    "name": "preceding",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 196,
+          "character": 10
+        },
+        "end": {
+          "line": 203,
+          "character": 6
+        }
+      }
+    },
+    "containerName": "findContainer"
+  },
+  {
+    "name": "candidates.filter() callback",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 196,
+          "character": 40
+        },
+        "end": {
+          "line": 203,
+          "character": 5
+        }
+      }
+    },
+    "containerName": "preceding"
+  },
+  {
+    "name": "parentRange",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 197,
+          "character": 12
+        },
+        "end": {
+          "line": 197,
+          "character": 45
+        }
+      }
+    },
+    "containerName": "candidates.filter() callback"
+  },
+  {
+    "name": "range",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 186,
+          "character": 8
+        },
+        "end": {
+          "line": 186,
+          "character": 33
+        }
+      }
+    },
+    "containerName": "findContainer"
+  },
+  {
+    "name": "uri",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 185,
+          "character": 8
+        },
+        "end": {
+          "line": 185,
+          "character": 29
+        }
+      }
+    },
+    "containerName": "findContainer"
+  },
+  {
+    "name": "hoverText",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 104,
+          "character": 0
+        },
+        "end": {
+          "line": 112,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "value",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 108,
+          "character": 10
+        },
+        "end": {
+          "line": 108,
+          "character": 56
+        }
+      }
+    },
+    "containerName": "hoverText"
+  },
+  {
+    "name": "value",
+    "kind": 7,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 108,
+          "character": 33
+        },
+        "end": {
+          "line": 108,
+          "character": 47
+        }
+      }
+    },
+    "containerName": "value"
+  },
+  {
+    "name": "isDescendant",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 214,
+          "character": 0
+        },
+        "end": {
+          "line": 225,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "children",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 220,
+          "character": 12
+        },
+        "end": {
+          "line": 220,
+          "character": 66
+        }
+      }
+    },
+    "containerName": "isDescendant"
+  },
+  {
+    "name": "children",
+    "kind": 7,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 220,
+          "character": 37
+        },
+        "end": {
+          "line": 220,
+          "character": 54
+        }
+      }
+    },
+    "containerName": "children"
+  },
+  {
+    "name": "current",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 217,
+          "character": 10
+        },
+        "end": {
+          "line": 217,
+          "character": 31
+        }
+      }
+    },
+    "containerName": "isDescendant"
+  },
+  {
+    "name": "stack",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 215,
+          "character": 8
+        },
+        "end": {
+          "line": 215,
+          "character": 38
+        }
+      }
+    },
+    "containerName": "isDescendant"
+  },
+  {
+    "name": "isFlatSymbolInformation",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 138,
+          "character": 0
+        },
+        "end": {
+          "line": 144,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "obj",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 140,
+          "character": 8
+        },
+        "end": {
+          "line": 140,
+          "character": 45
+        }
+      }
+    },
+    "containerName": "isFlatSymbolInformation"
+  },
+  {
+    "name": "isPosition",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 81,
+          "character": 0
+        },
+        "end": {
+          "line": 85,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "pos",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 83,
+          "character": 8
+        },
+        "end": {
+          "line": 83,
+          "character": 46
+        }
+      }
+    },
+    "containerName": "isPosition"
+  },
+  {
+    "name": "KIND_NAMES",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 0,
+          "character": 6
+        },
+        "end": {
+          "line": 27,
+          "character": 10
+        }
+      }
+    }
+  },
+  {
+    "name": "kindName",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 65,
+          "character": 0
+        },
+        "end": {
+          "line": 70,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "LspPosition",
+    "kind": 13,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 29,
+          "character": 0
+        },
+        "end": {
+          "line": 29,
+          "character": 54
+        }
+      }
+    }
+  },
+  {
+    "name": "LspRange",
+    "kind": 13,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 30,
+          "character": 0
+        },
+        "end": {
+          "line": 30,
+          "character": 56
+        }
+      }
+    }
+  },
+  {
+    "name": "nestSymbolInformation",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 146,
+          "character": 0
+        },
+        "end": {
+          "line": 158,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "items.some() callback",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 148,
+          "character": 18
+        },
+        "end": {
+          "line": 148,
+          "character": 99
+        }
+      }
+    },
+    "containerName": "nestSymbolInformation"
+  },
+  {
+    "name": "node",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 152,
+          "character": 13
+        },
+        "end": {
+          "line": 152,
+          "character": 17
+        }
+      }
+    },
+    "containerName": "nestSymbolInformation"
+  },
+  {
+    "name": "nodes",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 150,
+          "character": 8
+        },
+        "end": {
+          "line": 150,
+          "character": 78
+        }
+      }
+    },
+    "containerName": "nestSymbolInformation"
+  },
+  {
+    "name": "items.map() callback",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 150,
+          "character": 40
+        },
+        "end": {
+          "line": 150,
+          "character": 77
+        }
+      }
+    },
+    "containerName": "nodes"
+  },
+  {
+    "name": "item",
+    "kind": 7,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 150,
+          "character": 53
+        },
+        "end": {
+          "line": 150,
+          "character": 60
+        }
+      }
+    },
+    "containerName": "items.map() callback"
+  },
+  {
+    "name": "children",
+    "kind": 7,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 150,
+          "character": 62
+        },
+        "end": {
+          "line": 150,
+          "character": 74
+        }
+      }
+    },
+    "containerName": "items.map() callback"
+  },
+  {
+    "name": "parent",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 153,
+          "character": 10
+        },
+        "end": {
+          "line": 153,
+          "character": 45
+        }
+      }
+    },
+    "containerName": "nestSymbolInformation"
+  },
+  {
+    "name": "roots",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 151,
+          "character": 8
+        },
+        "end": {
+          "line": 151,
+          "character": 32
+        }
+      }
+    },
+    "containerName": "nestSymbolInformation"
+  },
+  {
+    "name": "rangeContains",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 168,
+          "character": 0
+        },
+        "end": {
+          "line": 176,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "endsAfter",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 172,
+          "character": 8
+        },
+        "end": {
+          "line": 174,
+          "character": 88
+        }
+      }
+    },
+    "containerName": "rangeContains"
+  },
+  {
+    "name": "startsBefore",
+    "kind": 14,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 169,
+          "character": 8
+        },
+        "end": {
+          "line": 171,
+          "character": 96
+        }
+      }
+    },
+    "containerName": "rangeContains"
+  },
+  {
+    "name": "rangeSize",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 178,
+          "character": 0
+        },
+        "end": {
+          "line": 180,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "SymbolNode",
+    "kind": 13,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 136,
+          "character": 0
+        },
+        "end": {
+          "line": 136,
+          "character": 67
+        }
+      }
+    }
+  },
+  {
+    "name": "symbolRange",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 164,
+          "character": 0
+        },
+        "end": {
+          "line": 166,
+          "character": 1
+        }
+      }
+    }
+  },
+  {
+    "name": "symbolUri",
+    "kind": 12,
+    "location": {
+      "uri": "file:///home/david/projects/opencode/opencode-compact-lsp/src/compact.ts",
+      "range": {
+        "start": {
+          "line": 160,
+          "character": 0
+        },
+        "end": {
+          "line": 162,
+          "character": 1
+        }
+      }
+    }
+  }
+]
