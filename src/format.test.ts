@@ -1,8 +1,13 @@
 import { describe, expect, test } from "bun:test"
 import { applyLspOutput } from "./format"
+import { callHierarchyItem, documentSymbolTree, hoverMarkup, symbolInformation } from "./fixtures/lsp"
 
 const loc = [{ uri: "file:///a.ts", range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } } }]
 const hook = { title: "t", output: JSON.stringify(loc, null, 2), metadata: { result: loc } }
+
+function compactHook(result: unknown) {
+  return { title: "t", output: JSON.stringify(result, null, 2), metadata: { result } }
+}
 
 describe("applyLspOutput", () => {
   test("both false is identity", () => {
@@ -82,5 +87,82 @@ describe("applyLspOutput", () => {
     const hook = { title: "t", output: truncated, metadata: { result: loc, truncated: true, outputPath: "/tmp/x" } }
     expect(applyLspOutput({ compact: false, minified: false }, hook)).toBe(hook.output)
     expect(applyLspOutput({ compact: false, minified: false }, hook)).toBe(truncated)
+  })
+  test("compact documentSymbol is an indented outline, not JSON", () => {
+    const out = applyLspOutput({ compact: true, minified: true }, compactHook(documentSymbolTree))
+    expect(out).toBe("37:14 Constant LspTool\n  46:17 Method execute")
+  })
+  test("outline indents each child level by two spaces", () => {
+    const tree = [{
+      name: "Outer",
+      kind: 5,
+      selectionRange: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } },
+      children: [{
+        name: "mid",
+        kind: 6,
+        selectionRange: { start: { line: 1, character: 2 }, end: { line: 1, character: 3 } },
+        children: [{
+          name: "inner",
+          kind: 7,
+          selectionRange: { start: { line: 2, character: 4 }, end: { line: 2, character: 5 } },
+        }],
+      }],
+    }]
+    const out = applyLspOutput({ compact: true, minified: true }, compactHook(tree))
+    expect(out).toBe("1:1 Class Outer\n  2:3 Method mid\n    3:5 Property inner")
+  })
+  test("compact pretty documentSymbol is the same outline", () => {
+    const out = applyLspOutput({ compact: true, minified: false }, compactHook(documentSymbolTree))
+    expect(out).toBe("37:14 Constant LspTool\n  46:17 Method execute")
+  })
+  test("compact SymbolInformation outline appends path", () => {
+    const out = applyLspOutput({ compact: true, minified: true }, compactHook(symbolInformation))
+    expect(out).toBe("37:14 Constant LspTool /home/david/src/tool/lsp.ts")
+  })
+  test("compact hover stays JSON", () => {
+    const out = applyLspOutput({ compact: true, minified: true }, compactHook(hoverMarkup))
+    expect(JSON.parse(out)).toEqual([{ contents: "const X: 1" }])
+  })
+  test("empty symbol result stays []", () => {
+    expect(applyLspOutput({ compact: true, minified: true }, compactHook([]))).toBe("[]")
+  })
+  test("mixed symbol and location stays JSON DTO", () => {
+    const mixed = [documentSymbolTree[0], loc[0]]
+    const out = applyLspOutput({ compact: true, minified: true }, compactHook(mixed))
+    expect(JSON.parse(out)).toEqual([
+      { name: "LspTool", kind: "Constant", line: 37, column: 14, children: [{ name: "execute", kind: "Method", line: 46, column: 17 }] },
+      { path: "/a.ts", line: 1, column: 1, end_line: 1, end_column: 2 },
+    ])
+  })
+  test("newline in symbol name becomes a space", () => {
+    const tree = [{
+      name: "foo\nbar",
+      kind: 12,
+      selectionRange: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } },
+    }]
+    const out = applyLspOutput({ compact: true, minified: true }, compactHook(tree))
+    expect(out).toBe("1:1 Function foo bar")
+  })
+  test("name with spaces is the rest of the line", () => {
+    const tree = [{
+      name: "impl Foo for Bar",
+      kind: 5,
+      selectionRange: { start: { line: 9, character: 4 }, end: { line: 9, character: 8 } },
+    }]
+    const out = applyLspOutput({ compact: true, minified: true }, compactHook(tree))
+    expect(out).toBe("10:5 Class impl Foo for Bar")
+  })
+  test("compact false documentSymbol stays protocol JSON", () => {
+    const out = applyLspOutput({ compact: false, minified: true }, compactHook(documentSymbolTree))
+    expect(JSON.parse(out)).toEqual(documentSymbolTree)
+  })
+  test("compact CallHierarchyItem is a single outline line with path", () => {
+    const out = applyLspOutput({ compact: true, minified: true }, compactHook(callHierarchyItem))
+    expect(out).toBe("46:17 Method execute /home/david/src/tool/lsp.ts")
+  })
+  test("uri-only workspace symbol stays JSON", () => {
+    const symbol = { name: "Foo", kind: 5, location: { uri: "file:///a.ts" } }
+    const out = applyLspOutput({ compact: true, minified: true }, compactHook(symbol))
+    expect(JSON.parse(out)).toEqual({ name: "Foo", kind: 5, location: { uri: "file:///a.ts" } })
   })
 })

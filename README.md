@@ -10,7 +10,7 @@ The Language Server Protocol is JSON-RPC. Each reply is a **protocol object**: `
 
 OpenCode’s builtin `lsp` tool `JSON.stringify`s those objects with indent 2 and sends that string to the model. That is **protocol JSON** — the wire format, not a summary. It is large because every symbol repeats the same keys and pretty-print whitespace, and because OpenCode fans out to every matching server and concatenates.
 
-This plugin leaves the language server alone. It rewrites the tool **output** after OpenCode has the protocol payload: either minify that JSON, project it to a smaller DTO (`path`, 1-based `line` / `column`, kind names), or both.
+This plugin leaves the language server alone. It rewrites the tool **output** after OpenCode has the protocol payload: either minify that JSON, project it to a smaller DTO (`path`, 1-based `line` / `column`, kind names), or both. Compact **symbol** results (`documentSymbol`, `workspaceSymbol`, call hierarchy) are then an indented outline instead of JSON.
 
 ## Flags
 
@@ -38,7 +38,7 @@ Live **typescript-language-server 5.3.0** payloads, **o200k** tokens. Columns ar
 | `lsp.ts` documentSymbol | 5257 | 2967 | 2661 | 1779 | **3.0×** |
 | `lsp.ts` hover | 85 | 49 | 22 | 19 | **4.5×** |
 
-Minify-only is ~1.7× on symbol trees (whitespace). The DTO is the rest: drop extra ranges, `file://`, kind ints, `selectionRange`. Default (DTO mini) turns a large `documentSymbol` from ~30k tokens into ~10k. Hover wrappers shrink ~4×; the markdown type blob still dominates hover.
+Minify-only is ~1.7× on symbol trees (whitespace). The DTO is the rest: drop extra ranges, `file://`, kind ints, `selectionRange`. Those DTO columns are the intermediate form; compact then prints symbols as an outline (`37:14 Constant LspTool` with indented children), which is smaller still. Hover wrappers shrink ~4×; the markdown type blob still dominates hover.
 
 ## Examples
 
@@ -88,7 +88,7 @@ Same `goToDefinition` hit under each flag pair. OpenCode without this plugin is 
 [{"path":"/home/david/projects/opencode/opencode/packages/opencode/src/tool/lsp.ts","line":37,"column":14,"end_line":37,"end_column":21}]
 ```
 
-`documentSymbol` drops `selectionRange` / `detail` and names the kind:
+`documentSymbol` drops `selectionRange` / `detail`, names the kind, and prints an outline (`line:column kind name`, two-space indent per child). `workspaceSymbol` / call hierarchy append `path` when present:
 
 ```json
 {
@@ -96,12 +96,19 @@ Same `goToDefinition` hit under each flag pair. OpenCode without this plugin is 
   "kind": 14,
   "detail": "const",
   "range": { "start": { "line": 36, "character": 0 }, "end": { "line": 111, "character": 1 } },
-  "selectionRange": { "start": { "line": 36, "character": 13 }, "end": { "line": 36, "character": 20 } }
+  "selectionRange": { "start": { "line": 36, "character": 13 }, "end": { "line": 36, "character": 20 } },
+  "children": [{
+    "name": "execute",
+    "kind": 6,
+    "range": { "start": { "line": 45, "character": 8 }, "end": { "line": 110, "character": 11 } },
+    "selectionRange": { "start": { "line": 45, "character": 16 }, "end": { "line": 45, "character": 23 } }
+  }]
 }
 ```
 
-```json
-{"name":"LspTool","kind":"Constant","line":37,"column":14}
+```
+37:14 Constant LspTool
+  46:17 Method execute
 ```
 
 Hover unwraps `MarkupContent` and drops `range`:
