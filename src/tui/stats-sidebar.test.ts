@@ -25,9 +25,25 @@ mock.module("@opentui/solid", () => ({
   jsx: () => null,
 }))
 
-const { getCollapsedText, getExpandedLines } = await import("./stats-sidebar")
+const { getCollapsedText, getExpandedRows, colorForTone } = await import("./stats-sidebar")
 
 describe("stats-sidebar", () => {
+  test("semantic tones resolve to their theme colors", () => {
+    const theme = {
+      accent: "accent",
+      success: "success",
+      warning: "warning",
+      error: "error",
+      textMuted: "muted",
+    }
+
+    expect(colorForTone(theme, "accent")).toBe("accent")
+    expect(colorForTone(theme, "success")).toBe("success")
+    expect(colorForTone(theme, "warning")).toBe("warning")
+    expect(colorForTone(theme, "error")).toBe("error")
+    expect(colorForTone(theme, "muted")).toBe("muted")
+  })
+
   test("collapsed unavailable shows LSP stats unavailable", () => {
     const text = getCollapsedText({
       status: "unavailable",
@@ -48,17 +64,17 @@ describe("stats-sidebar", () => {
       tokenizerErrorCalls: 0,
       lastSeenAtMs: 1000,
     } as any
-    const lines = getExpandedLines({
+    const rows = getExpandedRows({
       status: "ready",
       sessionAgg: null,
       projectAgg: project,
     })
-    const joined = lines.join("\n")
-    expect(joined).toContain("LSP hook savings (estimate)")
-    expect(joined).toContain("Project")
-    expect(joined).toContain("o200k_base estimate")
-    expect(joined).toContain("Est. context-token delta")
-    expect(joined).toContain("≈6.0K")
+    expect(rows).toEqual([
+      { kind: "section", label: "Project" },
+      { kind: "metric", label: "Context tokens saved", value: "6.0K", tone: "accent" },
+      { kind: "metric", label: "Compaction rate", value: "60.0%", tone: "success" },
+      { kind: "metric", label: "Measured calls", value: "5", tone: "muted" },
+    ])
   })
 
   test("collapsed initializing", () => {
@@ -79,7 +95,7 @@ describe("stats-sidebar", () => {
       lastSeenAtMs: 1,
     } as any
     const text = getCollapsedText({ status: "ready", sessionAgg: null, projectAgg: project })
-    expect(text).toBe("LSP " + "≈4.0K project")
+    expect(text).toBe("LSP 80.0% project")
   })
 
   test("collapsed both empty shows no data", () => {
@@ -113,9 +129,8 @@ describe("stats-sidebar", () => {
       lastSeenAtMs: 1,
     } as any
     const text = getCollapsedText({ status: "stale", sessionAgg: null, projectAgg: null, lastProjectAgg: project } as any)
-    // stale uses last aggregates; formatTokens(800)=≈800
     expect(text).toContain("LSP stats stale")
-    expect(text).toContain("≈800 project")
+    expect(text).toContain("80.0% project")
   })
 
   test("expanded ready shows session and project deltas", () => {
@@ -139,24 +154,66 @@ describe("stats-sidebar", () => {
       tokenizerErrorCalls: 0,
       lastSeenAtMs: 1,
     } as any
-    const lines = getExpandedLines({ status: "ready", sessionAgg: session, projectAgg: project })
-    const joined = lines.join("\n")
-    expect(joined).toContain("Session")
-    expect(joined).toContain("Project")
-    expect(joined).toContain("Est. context-token delta")
-    expect(joined).toContain("Savings rate")
-    expect(joined).toContain("Measured calls")
-    expect(joined).toContain("Truncated")
+    const rows = getExpandedRows({ status: "ready", sessionAgg: session, projectAgg: project })
+    expect(rows).toContainEqual({ kind: "section", label: "Session" })
+    expect(rows).toContainEqual({
+      kind: "metric",
+      label: "Context tokens saved",
+      value: "2.0K",
+      tone: "accent",
+    })
+    expect(rows).toContainEqual({
+      kind: "metric",
+      label: "Compaction rate",
+      value: "66.7%",
+      tone: "success",
+    })
+    expect(rows).toContainEqual({ kind: "section", label: "Project" })
+    expect(rows).toContainEqual({
+      kind: "metric",
+      label: "Oversize exclusions",
+      value: "1",
+      tone: "warning",
+    })
+    expect(rows).not.toContainEqual(expect.objectContaining({ label: "Truncated" }))
+  })
+
+  test("expanded unmeasured session shows diagnostics without Truncated", () => {
+    const session = {
+      calls: 2,
+      beforeTokens: 0,
+      afterTokens: 0,
+      truncatedCalls: 3,
+      passThroughCalls: 0,
+      excludedOversizeCalls: 1,
+      tokenizerErrorCalls: 1,
+      lastSeenAtMs: 1,
+    } as any
+    const rows = getExpandedRows({ status: "ready", sessionAgg: session, projectAgg: null })
+    expect(rows).toContainEqual({ kind: "message", text: "No measured calls yet", tone: "muted" })
+    expect(rows).toContainEqual({
+      kind: "metric",
+      label: "Oversize exclusions",
+      value: "1",
+      tone: "warning",
+    })
+    expect(rows).toContainEqual({
+      kind: "metric",
+      label: "Tokenizer errors",
+      value: "1",
+      tone: "error",
+    })
+    expect(rows).not.toContainEqual(expect.objectContaining({ label: "Truncated" }))
   })
 
   test("expanded initializing shows Stats initializing", () => {
-    const lines = getExpandedLines({ status: "initializing", sessionAgg: null, projectAgg: null })
-    expect(lines).toEqual(["Stats initializing"])
+    const rows = getExpandedRows({ status: "initializing", sessionAgg: null, projectAgg: null })
+    expect(rows).toEqual([{ kind: "message", text: "Stats initializing", tone: "muted" }])
   })
 
   test("expanded unavailable shows Stats unavailable", () => {
-    const lines = getExpandedLines({ status: "unavailable", sessionAgg: null, projectAgg: null })
-    expect(lines).toEqual(["Stats unavailable"])
+    const rows = getExpandedRows({ status: "unavailable", sessionAgg: null, projectAgg: null })
+    expect(rows).toEqual([{ kind: "message", text: "Stats unavailable", tone: "warning" }])
   })
 
   test("expanded zero shows zero handling", () => {
@@ -170,10 +227,12 @@ describe("stats-sidebar", () => {
       tokenizerErrorCalls: 0,
       lastSeenAtMs: 0,
     } as any
-    const lines = getExpandedLines({ status: "zero", sessionAgg: null, projectAgg: project })
-    const joined = lines.join("\n")
-    expect(joined).toContain("LSP hook savings (estimate)")
-    expect(joined).toContain("Project")
-    expect(joined).toContain("No measured calls yet")
+    const rows = getExpandedRows({ status: "zero", sessionAgg: null, projectAgg: project })
+    expect(rows).toEqual([
+      { kind: "section", label: "Session" },
+      { kind: "message", text: "No measured calls yet", tone: "muted" },
+      { kind: "section", label: "Project" },
+      { kind: "message", text: "No measured calls yet", tone: "muted" },
+    ])
   })
 })

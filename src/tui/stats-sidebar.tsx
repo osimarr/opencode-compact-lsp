@@ -1,5 +1,5 @@
 /** @jsxImportSource @opentui/solid */
-import type { TuiPluginApi, TuiSlotPlugin } from "@opencode-ai/plugin/tui"
+import type { TuiPluginApi, TuiSlotPlugin, TuiThemeCurrent } from "@opencode-ai/plugin/tui"
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment - solid-js stub has no types in CI
 // @ts-ignore: solid-js types are provided by runtime, ignore missing declaration for test stub
 import { createEffect, createMemo, createSignal, on, onCleanup } from "solid-js"
@@ -14,8 +14,8 @@ declare global {
     }
   }
 }
-import { formatTokens, formatCompression, formatHeader, formatFooter } from "./stats-format"
-import { deriveSaved, deriveCompressionPercent, emptyAggregate, type Aggregate } from "../stats/contract"
+import { formatTokens, formatCompression, formatHeader } from "./stats-format"
+import { deriveCompressionPercent, emptyAggregate, type Aggregate } from "../stats/contract"
 import { createTuiPoller, readTuiState, clearReaderState, type TuiReadResult, type TuiStatus } from "./stats-reader"
 
 // ---- pure helpers for tests and component ----
@@ -50,8 +50,8 @@ export function getCollapsedText(state: {
   const sHasMeasured = hasMeasured(useSession)
   const pHasMeasured = hasMeasured(useProject)
   // build body
-  const s = useSession && sHasMeasured ? formatTokens(getSaved(useSession)) + " session" : null
-  const p = useProject && pHasMeasured ? formatTokens(getSaved(useProject)) + " project" : null
+  const s = useSession && sHasMeasured ? formatCompression(deriveCompressionPercent(useSession)) + " session" : null
+  const p = useProject && pHasMeasured ? formatCompression(deriveCompressionPercent(useProject)) + " project" : null
   let body: string
   if (s && p) body = `${s} / ${p}`
   else if (s) body = s
@@ -70,88 +70,107 @@ export function getCollapsedText(state: {
   return `LSP ${body}`
 }
 
-export function getExpandedLines(state: {
+export type SidebarTone = "accent" | "success" | "muted" | "warning" | "error"
+
+export type SidebarRow =
+  | { kind: "section"; label: string }
+  | { kind: "metric"; label: string; value: string; tone: SidebarTone }
+  | { kind: "message"; text: string; tone: SidebarTone }
+
+export function colorForTone(theme: TuiThemeCurrent, tone: SidebarTone) {
+  if (tone === "accent") return theme.accent
+  if (tone === "success") return theme.success
+  if (tone === "warning") return theme.warning
+  if (tone === "error") return theme.error
+  return theme.textMuted
+}
+
+export function getExpandedRows(state: {
   status: TuiStatus
   sessionAgg: Aggregate | null
   projectAgg: Aggregate | null
   // for stale, lastGood
   lastSessionAgg?: Aggregate | null
   lastProjectAgg?: Aggregate | null
-}): string[] {
-  if (state.status === "initializing") return ["Stats initializing"]
-  if (state.status === "unavailable") return ["Stats unavailable"]
+}): SidebarRow[] {
+  if (state.status === "initializing") return [{ kind: "message", text: "Stats initializing", tone: "muted" }]
+  if (state.status === "unavailable") return [{ kind: "message", text: "Stats unavailable", tone: "warning" }]
   const isStale = state.status === "stale"
   const sessionAgg = isStale ? (state.lastSessionAgg ?? state.sessionAgg) : state.sessionAgg
   const projectAgg = isStale ? (state.lastProjectAgg ?? state.projectAgg) : state.projectAgg
 
-  const lines: string[] = []
-  if (isStale) lines.push("Stats stale")
-  lines.push(formatHeader())
-  lines.push("")
+  const rows: SidebarRow[] = []
+  if (isStale) rows.push({ kind: "message", text: "Stats stale", tone: "warning" })
+
+  const appendMetrics = (agg: Aggregate) => {
+    rows.push({ kind: "metric", label: "Context tokens saved", value: formatTokens(getSaved(agg)), tone: "accent" })
+    rows.push({
+      kind: "metric",
+      label: "Compaction rate",
+      value: formatCompression(deriveCompressionPercent(agg)),
+      tone: "success",
+    })
+    rows.push({
+      kind: "metric",
+      label: "Measured calls",
+      value: String(agg.calls - agg.excludedOversizeCalls - agg.tokenizerErrorCalls),
+      tone: "muted",
+    })
+  }
+  const appendDiagnostics = (agg: Aggregate) => {
+    if (agg.excludedOversizeCalls > 0) {
+      rows.push({ kind: "metric", label: "Oversize exclusions", value: String(agg.excludedOversizeCalls), tone: "warning" })
+    }
+    if (agg.tokenizerErrorCalls > 0) {
+      rows.push({ kind: "metric", label: "Tokenizer errors", value: String(agg.tokenizerErrorCalls), tone: "error" })
+    }
+  }
 
   // Session section handling
   // If session empty and project has measured, we still show Session with No measured calls yet
   // but we will render Session anyway for clarity (project rows follow immediately after Session block)
-  const sessionHasBucket = sessionAgg !== null
   const sessionMeasured = hasMeasured(sessionAgg)
   const projectMeasured = hasMeasured(projectAgg)
 
   // Per spec "If Session has no bucket/observations and Project has measurements, Project rows follow immediately."
   // We'll include Session when sessionAgg is not null; when null we skip Session header to let Project follow immediately.
   if (sessionAgg !== null) {
-    lines.push("Session")
+    rows.push({ kind: "section", label: "Session" })
     if (!sessionMeasured) {
-      lines.push("  No measured calls yet")
-      if (sessionAgg.excludedOversizeCalls > 0) lines.push(`  Oversize exclusions       ${sessionAgg.excludedOversizeCalls}`)
-      if (sessionAgg.tokenizerErrorCalls > 0) lines.push(`  Tokenizer errors          ${sessionAgg.tokenizerErrorCalls}`)
-      lines.push(`  Truncated                 ${sessionAgg.truncatedCalls}`)
+      rows.push({ kind: "message", text: "No measured calls yet", tone: "muted" })
     } else {
-      lines.push(`  Est. context-token delta  ${formatTokens(getSaved(sessionAgg))}`)
-      lines.push(`  Savings rate              ${formatCompression(deriveCompressionPercent(sessionAgg))}`)
-      lines.push(`  Measured calls            ${sessionAgg.calls - sessionAgg.excludedOversizeCalls - sessionAgg.tokenizerErrorCalls}`)
-      lines.push(`  Truncated                 ${sessionAgg.truncatedCalls}`)
-      if (sessionAgg.excludedOversizeCalls > 0) lines.push(`  Oversize exclusions       ${sessionAgg.excludedOversizeCalls}`)
-      if (sessionAgg.tokenizerErrorCalls > 0) lines.push(`  Tokenizer errors          ${sessionAgg.tokenizerErrorCalls}`)
+      appendMetrics(sessionAgg)
     }
-    lines.push("")
+    appendDiagnostics(sessionAgg)
   } else {
     // session empty, show placeholder if project not measured? For zero state, show Session placeholder?
     // If we skip Session when null, we still need to indicate empty? Spec says valid never-observed session uses same empty state.
     // For session empty with project data, we skip Session and go directly to Project for compactness.
     // We'll not add Session block when null and projectMeasured.
     if (!projectMeasured) {
-      lines.push("Session")
-      lines.push("  No measured calls yet")
-      lines.push("")
+      rows.push({ kind: "section", label: "Session" })
+      rows.push({ kind: "message", text: "No measured calls yet", tone: "muted" })
     }
   }
 
   // Project section
   // Project always exists as aggregate (even if empty), but we handle null as empty
   const proj = projectAgg ?? emptyAggregate()
-  lines.push("Project")
+  rows.push({ kind: "section", label: "Project" })
   if (!hasMeasured(proj)) {
-    lines.push("  No measured calls yet")
-    if (proj.excludedOversizeCalls > 0) lines.push(`  Oversize exclusions       ${proj.excludedOversizeCalls}`)
-    if (proj.tokenizerErrorCalls > 0) lines.push(`  Tokenizer errors          ${proj.tokenizerErrorCalls}`)
-    // Project omits Truncated per spec
+    rows.push({ kind: "message", text: "No measured calls yet", tone: "muted" })
   } else {
-    lines.push(`  Est. context-token delta  ${formatTokens(getSaved(proj))}`)
-    lines.push(`  Savings rate              ${formatCompression(deriveCompressionPercent(proj))}`)
-    lines.push(`  Measured calls            ${proj.calls - proj.excludedOversizeCalls - proj.tokenizerErrorCalls}`)
-    if (proj.excludedOversizeCalls > 0) lines.push(`  Oversize exclusions       ${proj.excludedOversizeCalls}`)
-    if (proj.tokenizerErrorCalls > 0) lines.push(`  Tokenizer errors          ${proj.tokenizerErrorCalls}`)
+    appendMetrics(proj)
   }
-  lines.push("")
-  lines.push(formatFooter())
-  return lines
+  appendDiagnostics(proj)
+  return rows
 }
 
 // ---- Solid component ----
 
 const REFRESH_DEBOUNCE_MS = 200 // kept for spec alignment, used inside poller
 
-export function StatsSidebarContent(props: { api: TuiPluginApi; sessionId: () => string }) {
+export function StatsSidebarContent(props: { api: TuiPluginApi; sessionId: () => string; theme: TuiThemeCurrent }) {
   const initialCollapsed = (() => {
     try {
       return props.api.kv.get<boolean>("collapsed", false) ?? false
@@ -260,28 +279,42 @@ export function StatsSidebarContent(props: { api: TuiPluginApi; sessionId: () =>
     return getCollapsedText({ status: st.status, sessionAgg: st.sessionAgg, projectAgg: st.projectAgg })
   })
 
-  const expandedLines = createMemo(() => {
+  const expandedRows = createMemo(() => {
     const st = s()
-    return getExpandedLines({ status: st.status, sessionAgg: st.sessionAgg, projectAgg: st.projectAgg })
+    return getExpandedRows({ status: st.status, sessionAgg: st.sessionAgg, projectAgg: st.projectAgg })
   })
 
   // @ts-ignore
   return (
     <box flexDirection="column" width="100%">
-      <box flexDirection="row" justifyContent="space-between" onMouseDown={toggleCollapsed}>
-        <text>
-          <b>{formatHeader()}</b>
-        </text>
-        <text>{isCollapsed() ? "▶" : "▼"}</text>
+      <box flexDirection="row" onMouseDown={toggleCollapsed}>
+        <box paddingLeft={1} paddingRight={1} backgroundColor={props.theme.accent}>
+          <text fg={props.theme.background}>
+            <b>{isCollapsed() ? "▶ " : "▼ "}{formatHeader()}</b>
+          </text>
+        </box>
       </box>
       {isCollapsed() ? (
         <box>
-          <text>{collapsedText()}</text>
+          <text fg={collapsedText().includes("%") ? props.theme.success : props.theme.textMuted}>
+            <b>{collapsedText()}</b>
+          </text>
         </box>
       ) : (
         <box flexDirection="column">
-          {expandedLines().map((line: string) => (
-            <text>{line}</text>
+          {expandedRows().map((row: SidebarRow) => (
+            row.kind === "section" ? (
+              <box width="100%" marginTop={1}>
+                <text fg={props.theme.text}><b>{row.label}</b></text>
+              </box>
+            ) : row.kind === "metric" ? (
+              <box width="100%" flexDirection="row" justifyContent="space-between">
+                <text fg={props.theme.textMuted}>{row.label}</text>
+                <text fg={colorForTone(props.theme, row.tone)}><b>{row.value}</b></text>
+              </box>
+            ) : (
+              <text fg={colorForTone(props.theme, row.tone)}>{row.text}</text>
+            )
           ))}
         </box>
       )}
@@ -295,7 +328,8 @@ export async function createStatsSidebarSlot(api: TuiPluginApi): Promise<TuiSlot
     slots: {
       sidebar_content: (_ctx: any, value: any) => {
         const sessionId = () => (value?.session_id as string) ?? ""
-        return <StatsSidebarContent api={api} sessionId={sessionId} />
+        const theme = createMemo(() => _ctx.theme.current as TuiThemeCurrent)
+        return <StatsSidebarContent api={api} sessionId={sessionId} theme={theme()} />
       },
     },
   }

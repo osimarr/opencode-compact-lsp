@@ -875,37 +875,34 @@ remains intact.
 ## Sidebar UX and lifecycle
 
 The TUI uses an AFT-style `sidebar_content` block with Session and Project
-sections. Expanded content uses these labels:
+sections. The title `LSP compaction (estimate)` appears once, as an accent
+badge with the collapse chevron. Expanded content uses aligned rows: muted
+labels, bold values, saved tokens in `theme.accent`, compression rate in
+`theme.success`, counts in `theme.textMuted`.
 
 ```text
-LSP hook savings (estimate)
+▼ LSP compaction (estimate)
 
 Session
-  Est. context-token delta  ≈12.4K
-  Savings rate              ≈64.9%
+  Context tokens saved      12.4K
+  Compaction rate           64.9%
   Measured calls            12
-  Truncated                 1
 
 Project
-  Est. context-token delta  ≈1.8M
-  Savings rate              ≈62.9%
+  Context tokens saved      1.8M
+  Compaction rate           62.9%
   Measured calls            420
-
-o200k_base estimate · output context
 ```
 
-`Measured calls` is exactly `measuredCalls`. The footer is exactly
-`o200k_base estimate · output context`. Approximation marks describe the fixed
-tokenizer proxy. Token deltas below 1,000 use an integer; thousands and millions
-use one-decimal `K`/`M` compact notation. A positive nonzero estimate prefixes
-the magnitude with `≈` (`≈320`, `≈12.4K`), a negative estimate prefixes it with
-the Unicode minus sign followed by approximation (`−≈320`, `−≈1.2K`), and zero
-is exactly `0`. Values are rounded to the nearest displayed unit and never
-clamped.
+`Measured calls` is exactly `measuredCalls`. There is no footer. Token deltas
+below 1,000 use an integer; thousands and millions use one-decimal `K`/`M`
+compact notation. A negative estimate prefixes the Unicode minus sign
+(`−320`, `−1.2K`), and zero is exactly `0`. Values are rounded to the nearest
+displayed unit and never clamped. No approximation mark is shown.
 
-Savings rate uses the derived `compressionPercent`: positive `≈64.9%`, negative
-`−≈5.1%`, exact zero `0.0%`, and a zero-token baseline `—`. Percentage output
-always has one decimal when available.
+Compaction rate uses the derived `compressionPercent`: positive `64.9%`,
+negative `−5.1%`, exact zero `0.0%`, and a zero-token baseline `—`. Percentage
+output always has one decimal when available.
 
 When `measuredCalls === 0`, the Session section says exactly
 `No measured calls yet` instead of showing a headline delta or rate. If Session
@@ -914,15 +911,10 @@ immediately. A valid locally derived but never-observed Session key uses this
 same empty state. When an aggregate has `measuredCalls === 0` but
 `observedCalls`, `excludedOversizeCalls`, or `tokenizerErrorCalls` is nonzero,
 expanded content still says `No measured calls yet` and then shows its nonzero
-`Oversize exclusions` and `Tokenizer errors` diagnostic rows. Session shows
-`Truncated` whenever a Session bucket exists, including zero, because host
-truncation in the current session is immediately actionable.
-
-Project omits `Truncated` intentionally to keep the persistent historical
-section compact; its Aggregate value remains persisted. Sidebar details/help
-state `Project Truncated remains persisted in stats.` without changing the
-exact metric footer. Pass-through counts are retained for validation and
-diagnostics but omitted from the v1 sidebar.
+`Oversize exclusions` and `Tokenizer errors` diagnostic rows. `Truncated` is
+persisted on both aggregates but omitted from the v1 sidebar. Pass-through
+counts are retained for validation and diagnostics but omitted from the v1
+sidebar.
 
 During the defined missing-key/marker startup grace, expanded content displays
 exactly `Stats initializing` and hides cached/snapshot values. Invalid state
@@ -940,18 +932,19 @@ available capability marker retains last-good values and adds exactly
 staleness follows the stricter 5-second rule above. Stale is never inferred
 solely from snapshot age because snapshots update only with LSP activity.
 
-Collapsed examples define all special formatting:
+Collapsed examples define all special formatting. The collapsed line shows
+compression rate, not token deltas:
 
 ```text
-positive:                    LSP ≈12.4K session / ≈1.8M project
-negative:                    LSP −≈320 session / −≈1.2K project
-measured zero:               LSP 0 session / 0 project
+positive:                    LSP 64.9% session / 62.9% project
+negative:                    LSP −5.1% session / −3.2% project
+measured zero:               LSP 0.0% session / 0.0% project
 diagnostics, no measurement: LSP no measured data
-Session empty, Project data: LSP ≈1.8M project
+Session empty, Project data: LSP 62.9% project
 both empty:                  LSP no data
 initializing:                LSP stats initializing
 unavailable/corrupt:         LSP stats unavailable
-stale last-good:             LSP stats stale · ≈12.4K session / ≈1.8M project
+stale last-good:             LSP stats stale · 64.9% session / 62.9% project
 ```
 
 Collapsed `LSP no measured data` applies when the current Session has no
@@ -1377,14 +1370,14 @@ event-loop target requires a new architecture approval.
 
 ### TUI and end to end
 
-- Formatting tests assert exact rows and sign order for positive `≈`, negative
-  `−≈`, token zero `0`, one-decimal percentages, null `—`, compact K/M,
-  `No measured calls yet`, diagnostic rows, `LSP no measured data`, Project-only
-  collapse for an unobserved Session, `LSP no data`, `Stats initializing`,
-  `LSP stats initializing`, `Stats unavailable`, `LSP stats unavailable`, and
-  stale last-good states. They cover measured-zero with observed/exclusion/error
-  diagnostics, Session host-truncated display, and intentional Project
-  Truncated omission plus persisted-detail text.
+- Formatting tests assert exact rows and sign order for positive magnitudes,
+  negative `−` prefixes, token zero `0`, one-decimal percentages, null `—`,
+  compact K/M, `No measured calls yet`, diagnostic rows, `LSP no measured data`,
+  Project-only collapse for an unobserved Session, `LSP no data`,
+  `Stats initializing`, `LSP stats initializing`, `Stats unavailable`,
+  `LSP stats unavailable`, and stale last-good states. They cover measured-zero
+  with observed/exclusion/error diagnostics and that `Truncated` is omitted
+  from both Session and Project while remaining persisted.
 - Lifecycle tests cover immediate mount read, polling while mounted, collapsed
   polling with capability read before snapshot scan, trailing debounce, failed
   watch setup, snapshots directory `ENOENT`, first immutable publication,

@@ -75,46 +75,38 @@ if grep -R "proper-lockfile" src/tui --include="*.ts" --include="*.tsx" 2>/dev/n
 fi
 echo "bundle check ok"
 
-echo "== stats-smoke: ensure TUI stubs for runtime import =="
-if [ ! -f "node_modules/solid-js/index.js" ] || [ ! -f "node_modules/@opentui/solid/jsx-dev-runtime.js" ]; then
-  mkdir -p node_modules/solid-js node_modules/@opentui/solid
-  cat > node_modules/solid-js/package.json <<'JSON'
-{
-  "name": "solid-js",
-  "version": "1.0.0",
-  "type": "module",
-  "main": "index.js"
-}
+echo "== stats-smoke: TUI stubs in temp NODE_PATH (never package node_modules) =="
+STUBDIR="$(mktemp -d)"
+mkdir -p "$STUBDIR/solid-js" "$STUBDIR/@opentui/solid"
+cat > "$STUBDIR/solid-js/package.json" <<'JSON'
+{"name":"solid-js","version":"1.0.0","type":"module","main":"index.js"}
 JSON
-  cat > node_modules/solid-js/index.js <<'JS'
+cat > "$STUBDIR/solid-js/index.js" <<'JS'
 export function createEffect() {}
 export function createMemo(fn) { return fn; }
 export function createSignal(v) { return [() => v, () => {}]; }
 export function on(dep, fn) { return fn; }
 export function onCleanup() {}
 JS
-  cat > node_modules/@opentui/solid/package.json <<'JSON'
-{
-  "name": "@opentui/solid",
-  "version": "0.4.5",
-  "type": "module"
-}
+cat > "$STUBDIR/@opentui/solid/package.json" <<'JSON'
+{"name":"@opentui/solid","version":"0.4.5","type":"module"}
 JSON
-  cat > node_modules/@opentui/solid/index.js <<'JS'
+cat > "$STUBDIR/@opentui/solid/index.js" <<'JS'
 export function jsx() { return null; }
 export function jsxs() { return null; }
 export function jsxDEV() { return null; }
 JS
-  cat > node_modules/@opentui/solid/jsx-runtime.js <<'JS'
+cat > "$STUBDIR/@opentui/solid/jsx-runtime.js" <<'JS'
 export function jsx() { return null; }
 export function jsxs() { return null; }
 JS
-  cat > node_modules/@opentui/solid/jsx-dev-runtime.js <<'JS'
+cat > "$STUBDIR/@opentui/solid/jsx-dev-runtime.js" <<'JS'
 export function jsxDEV() { return null; }
 export function jsx() { return null; }
 export function jsxs() { return null; }
 JS
-fi
+export NODE_PATH="$STUBDIR${NODE_PATH:+:$NODE_PATH}"
+trap 'rm -rf "$STUBDIR" "$TMPDIR2" "$PROJECT_DIR"' EXIT
 echo "stubs ok"
 
 echo "== stats-smoke: simulate lsp call increments snapshot and sidebar rows =="
@@ -141,7 +133,7 @@ import * as crypto from "node:crypto"
 import { resolveStateRoot, canonicalProjectIdentity, deriveProjectKey, deriveSessionKey } from "__ROOT__/src/stats/identity"
 import { readSnapshot, commitDelta, ensureCapability } from "__ROOT__/src/stats/store"
 import { readTuiState, clearReaderState } from "__ROOT__/src/tui/stats-reader"
-import { getCollapsedText, getExpandedLines } from "__ROOT__/src/tui/stats-sidebar"
+import { getCollapsedText, getExpandedRows } from "__ROOT__/src/tui/stats-sidebar"
 import { STATS_METRIC } from "__ROOT__/src/stats/contract"
 
 async function main() {
@@ -217,21 +209,18 @@ async function main() {
   if (!tui.projectAgg || !tui.sessionAgg) throw new Error("tui aggs missing")
   if (tui.projectAgg.calls !== 1) throw new Error("tui project calls")
   if (tui.sessionAgg.calls !== 1) throw new Error("tui session calls")
-  // collapsed text should show session and project with ≈60
+  // collapsed text should show the 60% compression rate for session and project
   const collapsed = getCollapsedText({ status: tui.status, sessionAgg: tui.sessionAgg, projectAgg: tui.projectAgg })
   console.log("collapsed", collapsed)
   if (!collapsed.includes("session") || !collapsed.includes("project")) throw new Error("collapsed missing session/project: " + collapsed)
-  // saved is 60 => formatTokens 60 => ≈60
-  if (!collapsed.includes("60")) throw new Error("collapsed missing 60: " + collapsed)
-  const expanded = getExpandedLines({ status: tui.status, sessionAgg: tui.sessionAgg, projectAgg: tui.projectAgg })
-  console.log("expanded", expanded.join("\n"))
-  const expandedStr = expanded.join("\n")
-  if (!expandedStr.includes("Session")) throw new Error("expanded missing Session")
-  if (!expandedStr.includes("Project")) throw new Error("expanded missing Project")
-  if (!expandedStr.includes("Est. context-token delta")) throw new Error("expanded missing delta row")
-  if (!expandedStr.includes("Savings rate")) throw new Error("expanded missing savings rate")
-  if (!expandedStr.includes("Measured calls")) throw new Error("expanded missing measured calls")
-  if (!expandedStr.includes("o200k_base estimate")) throw new Error("expanded missing footer")
+  if (!collapsed.includes("60.0%")) throw new Error("collapsed missing 60.0%: " + collapsed)
+  const expanded = getExpandedRows({ status: tui.status, sessionAgg: tui.sessionAgg, projectAgg: tui.projectAgg })
+  console.log("expanded", expanded)
+  if (!expanded.some((row) => row.kind === "section" && row.label === "Session")) throw new Error("expanded missing Session")
+  if (!expanded.some((row) => row.kind === "section" && row.label === "Project")) throw new Error("expanded missing Project")
+  if (!expanded.some((row) => row.kind === "metric" && row.label === "Context tokens saved" && row.value === "60" && row.tone === "accent")) throw new Error("expanded missing saved tokens")
+  if (!expanded.some((row) => row.kind === "metric" && row.label === "Compaction rate" && row.value === "60.0%" && row.tone === "success")) throw new Error("expanded missing compaction rate")
+  if (!expanded.some((row) => row.kind === "metric" && row.label === "Measured calls")) throw new Error("expanded missing measured calls")
   console.log("sidebar rows ok")
 
   // second case: never-observed valid TUI session shows Session empty plus Project data
@@ -258,9 +247,9 @@ async function main() {
   if (!collapsed2.includes("project")) throw new Error("collapsed2 missing project: " + collapsed2)
   // Should not show "no data" when project has data
   if (collapsed2 === "LSP no data") throw new Error("collapsed2 incorrectly no data")
-  const expanded2 = getExpandedLines({ status: tui2.status as any, sessionAgg: tui2.sessionAgg, projectAgg: tui2.projectAgg })
-  console.log("expanded2", expanded2.join("\n"))
-  if (!expanded2.join("\n").includes("Project")) throw new Error("expanded2 missing Project")
+  const expanded2 = getExpandedRows({ status: tui2.status as any, sessionAgg: tui2.sessionAgg, projectAgg: tui2.projectAgg })
+  console.log("expanded2", expanded2)
+  if (!expanded2.some((row) => row.kind === "section" && row.label === "Project")) throw new Error("expanded2 missing Project")
   // Session should be "No measured calls yet" if shown
   // Our sidebar may show Session with No measured calls yet or skip Session when null and project measured - both are valid if Project present
   console.log("never-observed session ok")
