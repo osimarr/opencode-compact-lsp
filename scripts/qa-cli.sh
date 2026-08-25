@@ -7,6 +7,7 @@ PLUGIN=opencode-compact-lsp
 
 bash tests/qa/require-on-master.test.sh
 bun test tests/qa/document-symbol-outline.test.ts
+bun test tests/qa/tui-pack-install.test.ts
 
 bun run build
 shebang="$(head -n1 dist/cli.js)"
@@ -27,6 +28,9 @@ assert_pack() {
   }
 }
 assert_pack "package/dist/cli.js"
+assert_pack "package/dist/tui.ts"
+assert_pack "package/dist/tui/stats-sidebar.tsx"
+assert_pack "package/src/entry.mjs"
 assert_pack "package/src/plugin.ts"
 assert_pack "package/src/tui.ts"
 assert_pack "package/src/plugin-id.ts"

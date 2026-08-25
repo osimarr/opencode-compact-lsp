@@ -22,5 +22,6 @@ jobs:
           package-manager-cache: false
       - run: bun install --frozen-lockfile
       - run: bun test
+      - run: bun test tests/qa/tui-pack-install.test.ts
       - run: bash scripts/qa-cli.sh
       - run: bash tests/e2e/smoke.sh
