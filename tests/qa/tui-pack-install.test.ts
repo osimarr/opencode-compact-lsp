@@ -50,6 +50,11 @@ describe("packed TUI export", () => {
     expect(qa).toContain("tests/qa/tui-pack-install.test.ts")
   })
 
+  test("GitHub QA workflow runs this packed TUI gate", () => {
+    const yml = readFileSync(join(root, ".github/workflows/qa.yml"), "utf8")
+    expect(yml).toContain("tests/qa/tui-pack-install.test.ts")
+  })
+
   test("package.json ./tui points at the compiled loader", () => {
     const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
       exports: Record<string, string>
