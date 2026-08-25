@@ -1,10 +1,13 @@
 name: Publish npm
 on:
   push:
+    branches:
+      - master
     tags:
       - "v*"
 jobs:
   npm:
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     environment: npm
     permissions:
