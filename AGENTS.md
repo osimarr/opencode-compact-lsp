@@ -39,6 +39,8 @@ bash scripts/qa-cli.sh
 bash tests/e2e/smoke.sh
 ```
 
+CI (`.github/workflows/qa.yml`) runs `bun test`, `bash scripts/qa-cli.sh`, and `bash tests/e2e/smoke.sh` on pull requests to `master` and pushes to `master`. Tag publish stays on `v*` tags whose commit is an ancestor of `origin/master`.
+
 Smoke uses an isolated HOME and only checks plugin load (does not invoke `lsp`).
 `bun test tests/qa` runs against a captured tsserver `documentSymbol` payload (flat `SymbolInformation[]`, OpenCode does not advertise hierarchical symbols). Flattened outlines fail that gate.
 
