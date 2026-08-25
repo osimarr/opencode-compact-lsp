@@ -7,6 +7,7 @@ PLUGIN=opencode-compact-lsp
 
 bash tests/qa/require-on-master.test.sh
 bun test tests/qa/document-symbol-outline.test.ts
+bun test tests/qa/tui-pack-install.test.ts
 
 bun run build
 shebang="$(head -n1 dist/cli.js)"

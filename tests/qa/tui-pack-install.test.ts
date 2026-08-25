@@ -45,6 +45,11 @@ function run(cmd: string[], cwd: string) {
 }
 
 describe("packed TUI export", () => {
+  test("qa-cli.sh runs this packed TUI gate", () => {
+    const qa = readFileSync(join(root, "scripts/qa-cli.sh"), "utf8")
+    expect(qa).toContain("tests/qa/tui-pack-install.test.ts")
+  })
+
   test("package.json ./tui points at the compiled loader", () => {
     const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
       exports: Record<string, string>
