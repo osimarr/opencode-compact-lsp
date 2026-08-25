@@ -39,6 +39,8 @@ bash scripts/qa-cli.sh
 bash tests/e2e/smoke.sh
 ```
 
+CI (`.github/workflows/qa.yml`) runs `bun test`, `bash scripts/qa-cli.sh`, and `bash tests/e2e/smoke.sh` on pull requests to `master` and pushes to `master`. Tag publish stays on `v*` tags whose commit is an ancestor of `origin/master`.
+
 Smoke uses an isolated HOME and only checks plugin load (does not invoke `lsp`).
 `bun test tests/qa` runs against a captured tsserver `documentSymbol` payload (flat `SymbolInformation[]`, OpenCode does not advertise hierarchical symbols). Flattened outlines fail that gate.
 
@@ -60,4 +62,4 @@ Omit `compact` / `minified` → `true`. Both false is identity.
 
 ## Releases
 
-Version comes from `package.json`. Tag must be `v$version` and publishes to **next**. Do not automate `latest`; promote with `npm dist-tag add`. Workflow: `.github/workflows/publish.yml` (`environment: npm`, OIDC `id-token: write`). Token not used. If a tag's publish fails, fix the workflow and retry the **same** version (delete and recreate `v$version` if needed). Do not bump `package.json` for a version that never landed on the registry.
+Version comes from `package.json`. Tag must be `v$version` and publishes to **next**. Do not automate `latest`; promote with `npm dist-tag add`. Workflow: `.github/workflows/publish.yml` (`environment: npm`, OIDC `id-token: write`). Token not used. The tagged commit must be an ancestor of `origin/master` or the workflow fails before publish. If a tag's publish fails, fix the workflow and retry the **same** version (delete and recreate `v$version` if needed). Do not bump `package.json` for a version that never landed on the registry.

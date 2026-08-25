@@ -5,6 +5,7 @@ cd "$ROOT"
 export CI=true
 PLUGIN=opencode-compact-lsp
 
+bash tests/qa/require-on-master.test.sh
 bun test tests/qa/document-symbol-outline.test.ts
 
 bun run build

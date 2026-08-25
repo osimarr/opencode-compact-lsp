@@ -12,6 +12,12 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Require tagged commit is on master
+        run: |
+          git fetch origin master
+          bash scripts/require-on-master.sh "$GITHUB_SHA" origin/master
       - uses: oven-sh/setup-bun@v2.2.0
         with:
           bun-version: latest
