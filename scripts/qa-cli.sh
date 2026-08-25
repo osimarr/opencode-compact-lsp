@@ -27,6 +27,9 @@ assert_pack() {
   }
 }
 assert_pack "package/dist/cli.js"
+assert_pack "package/dist/tui.ts"
+assert_pack "package/dist/tui/stats-sidebar.tsx"
+assert_pack "package/src/entry.mjs"
 assert_pack "package/src/plugin.ts"
 assert_pack "package/src/tui.ts"
 assert_pack "package/src/plugin-id.ts"

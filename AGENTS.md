@@ -1,10 +1,12 @@
 # Agent notes
 
-OpenCode server + TUI plugin. Server hooks `tool.execute.after` on builtin `lsp` and rewrites `output` (not `metadata`). TUI export is a no-op so the plugin appears in the TUI plugin list. Do **not** register `tool: { lsp }`.
+OpenCode server + TUI plugin. Server hooks `tool.execute.after` on builtin `lsp` and rewrites `output` (not `metadata`). `exports["./tui"]` is `src/entry.mjs`, which loads the Solid-compiled graph under `dist/` (OpenTUI does not transform JSX in `node_modules`). Do **not** register `tool: { lsp }`.
 
 ## Local development
 
-Point config at this **package directory** (so TUI can load `exports["./tui"]`). Do not point at `src/plugin.ts`.
+Point **server** config at this **package directory** (so `exports["."]` / `./server` load `src/plugin.ts`). Do not point at `src/plugin.ts` directly.
+
+For a live TUI sidebar from source, point `tui.json` at `src/tui.ts` (file plugin, id `opencode-compact-lsp-dev`). Pointing at the package directory uses the compiled `./tui` export (id `opencode-compact-lsp`); run `bun run build` after TUI edits.
 
 In this repo:
 
@@ -51,7 +53,9 @@ Builtin `lsp` is behind `OPENCODE_EXPERIMENTAL_LSP_TOOL`. Without it the hook is
 | File | Role |
 |------|------|
 | `src/plugin.ts` | `tool.execute.after` hook |
-| `src/tui.ts` | TUI module (`id` + empty `tui`) |
+| `src/tui.ts` | TUI module (`id` + sidebar slot) |
+| `src/entry.mjs` | npm `./tui` loader → compiled `dist/tui.ts` |
+| `scripts/build-tui.ts` | Solid-compile TUI graph into `dist/` |
 | `src/compact.ts` | Protocol JSON → DTO |
 | `src/outline.ts` | Symbol DTO → indented outline |
 | `src/format.ts` | `applyLspOutput` flags + stringify / outline |
