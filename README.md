@@ -159,7 +159,7 @@ npx opencode-compact-lsp doctor --clear
 
 ## Releases
 
-npm version is always `package.json`'s `version`. A git tag `v0.1.0` (must match that version) publishes to the **next** dist-tag.
+npm version is always `package.json`'s `version`. A git tag `v0.1.0` (must match that version) publishes to the **next** dist-tag. The tagged commit must already be on `master`; tags on unmerged branches fail the workflow.
 
 Promotion to **latest** is manual:
 

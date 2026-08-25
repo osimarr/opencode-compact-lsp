@@ -60,4 +60,4 @@ Omit `compact` / `minified` → `true`. Both false is identity.
 
 ## Releases
 
-Version comes from `package.json`. Tag must be `v$version` and publishes to **next**. Do not automate `latest`; promote with `npm dist-tag add`. Workflow: `.github/workflows/publish.yml` (`environment: npm`, OIDC `id-token: write`). Token not used. If a tag's publish fails, fix the workflow and retry the **same** version (delete and recreate `v$version` if needed). Do not bump `package.json` for a version that never landed on the registry.
+Version comes from `package.json`. Tag must be `v$version` and publishes to **next**. Do not automate `latest`; promote with `npm dist-tag add`. Workflow: `.github/workflows/publish.yml` (`environment: npm`, OIDC `id-token: write`). Token not used. The tagged commit must be an ancestor of `origin/master` or the workflow fails before publish. If a tag's publish fails, fix the workflow and retry the **same** version (delete and recreate `v$version` if needed). Do not bump `package.json` for a version that never landed on the registry.
